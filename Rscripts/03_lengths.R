@@ -17,11 +17,12 @@ lengths <- lengths_raw %>%
 	mutate(date = mdy(date))
 
 lengths %>% 
-	filter(version == 2) %>%
+	# filter(version == 2) %>%
 	filter(temperature > 10) %>% 
 	mutate(length = as.numeric(length)) %>% 
-	filter(length > 1000) %>%
+	filter(length > 1000) %>% 
 	group_by(temperature) %>% 
-	summarise_each(funs(mean, std.error), length) %>% 
+	summarise_each(funs(mean, std.error), length) %>%
 	ggplot(aes(x = temperature, y = mean)) + geom_point() +
+	geom_smooth() + 
 	geom_errorbar(aes(ymin = mean - std.error, ymax = mean + std.error), width = 0.1)
