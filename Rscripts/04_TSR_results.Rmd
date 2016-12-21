@@ -98,7 +98,7 @@ data3 %>%
 
 ### Body size
 
-```{r}
+```{r body size, echo=FALSE, warning = FALSE, message = FALSE}
 data4 <- data3 %>% 
 	gather(clutch_number, length, starts_with("length")) %>% 
 	mutate(clutch_number = str_replace(clutch_number, "length_at_1st_clutch", "1st clutch")) %>% 
@@ -166,7 +166,7 @@ do(tidy(lm(log(somatic_growth_rate) ~ inverse_temp, data = .), conf.int = TRUE))
 
 ### Size rate trade-off??
 
-```{r, warning=FALSE, message = FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 data7 <- read_csv("/Users/Joey/Documents/Daph-TSR/data-processed/data7.csv")
 
 

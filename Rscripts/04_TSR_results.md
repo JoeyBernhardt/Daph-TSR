@@ -61,47 +61,7 @@ inverse_temp      0.6086533   0.1281431    4.749792   0.0000967     0.3429007   
 
 ### Body size
 
-
-```r
-data4 <- data3 %>% 
-	gather(clutch_number, length, starts_with("length")) %>% 
-	mutate(clutch_number = str_replace(clutch_number, "length_at_1st_clutch", "1st clutch")) %>% 
-	mutate(clutch_number = str_replace(clutch_number, "length_at_2nd_clutch_um", "2nd clutch")) %>% 
-	mutate(clutch_number = str_replace(clutch_number, "length_at_3rd_clutch", "3rd clutch")) %>% 
-	mutate(clutch_number = str_replace(clutch_number, "length_at_4th_clutch", "4th clutch")) %>% 
-	mutate(clutch_number = str_replace(clutch_number, "length_at_birth_um", "birth")) 
-	
-
-data4 %>% 
-	filter(unique_id != "K_16") %>% ## something weird is going on here!
-	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
-	group_by(clutch_number) %>% 
-	ggplot(data = ., aes(x = inverse_temp, y = log(length), color = factor(clutch_number))) + geom_point(size = 5, alpha = 0.5) +
-	geom_smooth(method = "lm") +
-	scale_x_reverse() + xlab("temperature (1/kT)") + ylab("ln length (um)") +
-	theme_minimal() + 
-	theme(axis.text.y   = element_text(size=20),
-				axis.text.x   = element_text(size=20),
-				axis.title.y  = element_text(size=20),
-				axis.title.x  = element_text(size=20),
-				panel.background = element_blank(),
-				panel.grid.major = element_blank(), 
-				panel.grid.minor = element_blank(),
-				axis.line = element_line(colour = "black"),
-				axis.ticks = element_line(size = 1),
-				legend.title = element_blank()) +
-	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
-```
-
-```
-## Warning: Removed 78 rows containing non-finite values (stat_smooth).
-```
-
-```
-## Warning: Removed 78 rows containing missing values (geom_point).
-```
-
-![](04_TSR_results_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](04_TSR_results_files/figure-html/body size-1.png)<!-- -->
 
 ### Somatic growth rates
 
@@ -138,7 +98,7 @@ data3 %>%
 ## Warning: Removed 18 rows containing missing values (geom_point).
 ```
 
-![](04_TSR_results_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](04_TSR_results_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 
 ```r
@@ -159,28 +119,4 @@ inverse_temp     0.5404576   0.0632702    8.542051     1e-07    0.4069691    0.6
 
 ### Size rate trade-off??
 
-
-```r
-data7 <- read_csv("/Users/Joey/Documents/Daph-TSR/data-processed/data7.csv")
-
-
-data7 %>% 
-	# filter(temperature > 13) %>% 
-ggplot(aes(x = somatic_growth_rate, y = max_length)) + geom_point(size = 4, color = "#619CFF", alpha = 0.5) +
-geom_smooth(method = "lm", color = "#619CFF") +
-	xlab("somatic growth rate (um/day)") + ylab("max body length (um)") +
-	theme_minimal() + 
-	theme(axis.text.y   = element_text(size=20),
-				axis.text.x   = element_text(size=20),
-				axis.title.y  = element_text(size=20),
-				axis.title.x  = element_text(size=20),
-				panel.background = element_blank(),
-				panel.grid.major = element_blank(), 
-				panel.grid.minor = element_blank(),
-				axis.line = element_line(colour = "black"),
-				axis.ticks = element_line(size = 1),
-				legend.title = element_blank()) +
-	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
-```
-
-![](04_TSR_results_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](04_TSR_results_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
