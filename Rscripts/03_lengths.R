@@ -65,6 +65,9 @@ write_csv(lengths_all, "data-processed/lengths_all.csv")
 lengths_all_adult <- lengths_all %>% 
 	filter(length > 1000) %>% 
 	distinct(length, .keep_all = TRUE)
+write_csv(lengths_all_adult, "data-processed/lengths_all_adult.csv")
+
+
 
 lengths_all_adult %>% 
 filter(temperature > 10) %>% 
@@ -83,6 +86,3 @@ filter(temperature > 10) %>%
 # lengths_all_adult %>% 
 # 	separate(ID, into = c("letter", "other"), sep = "[A-Z]", remove = FALSE) %>% View
 
-
-?separate
-separate
