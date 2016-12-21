@@ -1,0 +1,191 @@
+ID,Early death notes,Temperature,life_stage,Date of birth (M/D/Y),length,clutch_size
+2N1.2,"July 28th - two adults in the tube, based on size concluded that one was 20 V2 G and that the babies belong to 12 V2 N.",12C,birth,"July 4, 2016",728.923,
+A,,12C,birth,"July 5, 2016",684.041,
+B,Dead,12C,birth,"July 6, 2016",585.788,
+E,,12C,birth,"July 6, 2016",671.491,
+F,,12C,birth,"July 6, 2016",990.349,
+L,Dead,12C,birth,"July 5, 2016",692.729,
+K,Dead?,12C,birth,"July 17, 2016",NA,
+G,,12C,birth,"July 17, 2016",,
+2N1.3,,16C,birth,"July 4, 2016",753.614,
+A,,16C,birth,"July 5, 2016",718.791,
+B,,16C,birth,"July 6, 2016",738.423,
+E,,16C,birth,"July 6, 2016",669.648,
+F,Dead July 25th,16C,birth,"July 6, 2016",905.66,
+L,Dead July 8th,16C,birth,"July 5, 2016",654.777,
+K,,16C,birth,"July 17, 2016",,
+G,July 28th - measurement of only one baby ( No other babies found),16C,birth,"July 17, 2016",,
+2N1.4,dead july 21,20C,birth,"July 4, 2016",750.879,
+A,,20C,birth,"July 5, 2016",687.016,
+B,,20C,birth,"July 6, 2016",777.812,
+E,Dead July 13th,20C,birth,"July 6, 2016",671.672,
+F,,20C,birth,"July 6, 2016",1056.943,
+L,,20C,birth,"July 5, 2016",694.335,
+K,,20C,birth,"July 17, 2016",,
+G,July 28th - Georgia couldn`t find the Daphnia. Found 2 adults in 12 V2 N and based on size concluded that one was the 20 V2 G./ Dead Aug 8th,20C,birth,"July 17, 2016",,
+2N1.5,,24C,birth,"July 4, 2016",753.032,
+A,,24C,birth,"July 5, 2016",695.291,
+B,,24C,birth,"July 6, 2016",784.35,
+E,,24C,birth,"July 6, 2016",660.422,
+F,,24C,birth,"July 6, 2016",836.942,
+L,,24C,birth,"July 5, 2016",732.192,
+K,Dead?,24C,birth,"July 17, 2016",,
+G,Dead?,24C,birth,"July 17, 2016",,
+2N1.1,,8C,birth,"July 4, 2016",760.996,
+A,Dead July 8th,8C,birth,"July 5, 2016",664.756,
+B,Dead July 14th,8C,birth,"July 6, 2016",820.717,
+E,,8C,birth,"July 6, 2016",615.529,
+F,,8C,birth,"July 6, 2016",1042.315,
+L,Dead,8C,birth,"July 5, 2016",684.449,
+2N1.2,"July 28th - two adults in the tube, based on size concluded that one was 20 V2 G and that the babies belong to 12 V2 N.",12C,clutch_1,July 18 2016,1877.499,
+A,,12C,clutch_1,July 25 2016,1856.525,4
+B,Dead,12C,clutch_1,NA,NA,NA
+E,,12C,clutch_1,July 21 2016,1884.591,5
+F,,12C,clutch_1,July 20 2016,2014.199,5
+L,Dead,12C,clutch_1,NA,NA,NA
+K,Dead?,12C,clutch_1,NA,NA,NA
+G,,12C,clutch_1,August 1 2016,2171,
+2N1.3,,16C,clutch_1,July 19 2016,2386.327,2
+A,,16C,clutch_1,July 19 2016,2011.869,2
+B,,16C,clutch_1,July 17 2016,1998.19,3
+E,,16C,clutch_1,July 16 2016,,
+F,Dead July 25th,16C,clutch_1,July 15 2016,2270.188,5
+L,Dead July 8th,16C,clutch_1,NA,NA,NA
+K,,16C,clutch_1,September 4 2016,2825.929,
+G,July 28th - measurement of only one baby ( No other babies found),16C,clutch_1,July 28 2016,2235.283,0
+2N1.4,dead july 21,20C,clutch_1,July 16,,17
+A,,20C,clutch_1,July 15 2016,2178.576,10
+B,,20C,clutch_1,July 14 2016,1875.019,3
+E,Dead July 13th,20C,clutch_1,,,4
+F,,20C,clutch_1,July 16 2016,,9
+L,,20C,clutch_1,July 15 2016,1875.717,28
+K,,20C,clutch_1,July 27 2016,1912.663,
+G,July 28th - Georgia couldn`t find the Daphnia. Found 2 adults in 12 V2 N and based on size concluded that one was the 20 V2 G./ Dead Aug 8th,20C,clutch_1,July 27 2016,2394.311,2
+2N1.5,,24C,clutch_1,July 17 2016,2390.092,9
+A,,24C,clutch_1,July 13 2016,1854.054,1
+B,,24C,clutch_1,July 13 2016,2041.427,0
+E,,24C,clutch_1,July 12 2016,1899.974,0
+F,,24C,clutch_1,July 11 2016,1982.991,7
+L,,24C,clutch_1,July 13 2016,1744.941,
+K,Dead?,24C,clutch_1,,,
+G,Dead?,24C,clutch_1,,,
+2N1.1,,8C,clutch_1,,,
+A,Dead July 8th,8C,clutch_1,,,
+B,Dead July 14th,8C,clutch_1,,,
+E,,8C,clutch_1,August 4 2016,1839.887,7
+F,,8C,clutch_1,July 28 2016,2048.017,
+L,Dead,8C,clutch_1,NA,NA,NA
+2N1.2,"July 28th - two adults in the tube, based on size concluded that one was 20 V2 G and that the babies belong to 12 V2 N.",12C,clutch_2,July 23 2016,2024.381,8
+A,,12C,clutch_2,,,
+B,Dead,12C,clutch_2,NA,NA,NA
+E,,12C,clutch_2,July 27 2016,2016.739,
+F,,12C,clutch_2,July 25 2016,2185.278,9
+L,Dead,12C,clutch_2,NA,NA,NA
+K,Dead?,12C,clutch_2,NA,NA,NA
+G,,12C,clutch_2,,,
+2N1.3,,16C,clutch_2,July 23 2016,2564.148,4
+A,,16C,clutch_2,August 1 2016,,2
+B,,16C,clutch_2,July 20 2016,2191.355,
+E,,16C,clutch_2,July 20 2016,1969.135,10
+F,Dead July 25th,16C,clutch_2,July 18 2016,2120.869,4
+L,Dead July 8th,16C,clutch_2,NA,NA,NA
+K,,16C,clutch_2,September 7 2016,2911.878,
+G,July 28th - measurement of only one baby ( No other babies found),16C,clutch_2,August 5 2016,,4
+2N1.4,dead july 21,20C,clutch_2,July 19 2016,2510.064,
+A,,20C,clutch_2,July 17 2016,2152.845,9
+B,,20C,clutch_2,July 19 2016,2191.355,5
+E,Dead July 13th,20C,clutch_2,,,
+F,,20C,clutch_2,July 19 2016,2468.559,
+L,,20C,clutch_2,July 18 2016,,
+K,,20C,clutch_2,July 30 2016,,
+G,July 28th - Georgia couldn`t find the Daphnia. Found 2 adults in 12 V2 N and based on size concluded that one was the 20 V2 G./ Dead Aug 8th,20C,clutch_2,August 2 2016,,0
+2N1.5,,24C,clutch_2,July 18 2016,2415.681,18
+A,,24C,clutch_2,July 16 2016,,5
+B,,24C,clutch_2,July 15 2016,2175.511,12
+E,,24C,clutch_2,July 14 2016,1988.416,18
+F,,24C,clutch_2,July 15 2016,2270.188,22
+L,,24C,clutch_2,July 16 2016,,3
+K,Dead?,24C,clutch_2,,,
+G,Dead?,24C,clutch_2,,,
+2N1.1,,8C,clutch_2,,,
+A,Dead July 8th,8C,clutch_2,,,
+B,Dead July 14th,8C,clutch_2,,,
+E,,8C,clutch_2,August 13 2016,2048.905,
+F,,8C,clutch_2,August 8 2016,2185.218,
+L,Dead,8C,clutch_2,NA,NA,NA
+2N1.2,"July 28th - two adults in the tube, based on size concluded that one was 20 V2 G and that the babies belong to 12 V2 N.",12C,clutch_3,July 28 2016,2002.256,
+A,,12C,clutch_3,,,
+B,Dead,12C,clutch_3,NA,NA,NA
+E,,12C,clutch_3,August 1 2016,2029.892,2
+F,,12C,clutch_3,August 5 2016,,18
+L,Dead,12C,clutch_3,NA,NA,NA
+K,Dead?,12C,clutch_3,NA,NA,NA
+G,,12C,clutch_3,,,
+2N1.3,,16C,clutch_3,August 1 2016,2751.911,0
+A,,16C,clutch_3,August 12 2016,2755.235,
+B,,16C,clutch_3,August 12 2016,2896.866,
+E,,16C,clutch_3,July 23 2016,2202.931,10
+F,Dead July 25th,16C,clutch_3,July 19 2016,2118.573,2
+L,Dead July 8th,16C,clutch_3,NA,NA,NA
+K,,16C,clutch_3,September 12 2016,3052.33,
+G,July 28th - measurement of only one baby ( No other babies found),16C,clutch_3,September 2 2016,3159.927,
+2N1.4,dead july 21,20C,clutch_3,July 21 2016,NA,NA
+A,,20C,clutch_3,July 20 2016,2653.179,
+B,,20C,clutch_3,July 22 2016,2685.214,
+E,Dead July 13th,20C,clutch_3,,,
+F,,20C,clutch_3,July 21 2016,2624.694,
+L,,20C,clutch_3,July 20 2016,2167.909,
+K,,20C,clutch_3,August 2 2016,2449.145,0
+G,July 28th - Georgia couldn`t find the Daphnia. Found 2 adults in 12 V2 N and based on size concluded that one was the 20 V2 G./ Dead Aug 8th,20C,clutch_3,August 5 2016,2492.483,10
+2N1.5,,24C,clutch_3,July 20 2016,2550.536,
+A,,24C,clutch_3,July 18 2016,2124.901,8
+B,,24C,clutch_3,July 16 2016,,9
+E,,24C,clutch_3,,,
+F,,24C,clutch_3,July 17 2016,2393.659,16
+L,,24C,clutch_3,July 18 2016,2172.003,4
+K,Dead?,24C,clutch_3,,,
+G,Dead?,24C,clutch_3,,,
+2N1.1,,8C,clutch_3,,,
+A,Dead July 8th,8C,clutch_3,,,
+B,Dead July 14th,8C,clutch_3,,,
+E,,8C,clutch_3,August 23 2016,2256.24,
+F,,8C,clutch_3,August 25 2016,2341.339,
+L,Dead,8C,clutch_3,NA,NA,NA
+2N1.2,"July 28th - two adults in the tube, based on size concluded that one was 20 V2 G and that the babies belong to 12 V2 N.",12C,clutch_4,July 29 2016,2135.284,
+A,,12C,clutch_4,,,
+B,Dead,12C,clutch_4,NA,NA,NA
+E,,12C,clutch_4,August 8 2016,2417.794,
+F,,12C,clutch_4,August 11,2647.543,11
+L,Dead,12C,clutch_4,NA,NA,NA
+K,Dead?,12C,clutch_4,NA,NA,NA
+G,,12C,clutch_4,,,
+2N1.3,,16C,clutch_4,August 4 2016,2762.431,9
+A,,16C,clutch_4,,,
+B,,16C,clutch_4,September 6 2016,3327.664,
+E,,16C,clutch_4,August 1 2016,2431.284,2
+F,Dead July 25th,16C,clutch_4,,NA,
+L,Dead July 8th,16C,clutch_4,NA,NA,NA
+K,,16C,clutch_4,,NA,
+G,July 28th - measurement of only one baby ( No other babies found),16C,clutch_4,September 6 2016,3259.438,
+2N1.4,dead july 21,20C,clutch_4,NA,NA,NA
+A,,20C,clutch_4,July 22 2016,2750.916,
+B,,20C,clutch_4,,,
+E,Dead July 13th,20C,clutch_4,,NA,
+F,,20C,clutch_4,July 22 2016,2624.694,
+L,,20C,clutch_4,July 23 2016,2343.901,
+K,,20C,clutch_4,August 4 2016,2460.179,
+G,July 28th - Georgia couldn`t find the Daphnia. Found 2 adults in 12 V2 N and based on size concluded that one was the 20 V2 G./ Dead Aug 8th,20C,clutch_4,Dead,NA,
+2N1.5,,24C,clutch_4,July 22 2016,2723.807,
+A,,24C,clutch_4,July 19 2016,2330.235,
+B,,24C,clutch_4,July 18 2016,2452.862,17
+E,,24C,clutch_4,,,
+F,,24C,clutch_4,July 19 2016,,
+L,,24C,clutch_4,July 20 2016,2267.649,
+K,Dead?,24C,clutch_4,,,
+G,Dead?,24C,clutch_4,,,
+2N1.1,,8C,clutch_4,,,
+A,Dead July 8th,8C,clutch_4,,,
+B,Dead July 14th,8C,clutch_4,,,
+E,,8C,clutch_4,September 2 2016,2380.458,
+F,,8C,clutch_4,September 4 2016,2498.741,
+L,Dead,8C,clutch_4,NA,NA,NA
