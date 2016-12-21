@@ -1,85 +1,68 @@
-## Daph TSR initial plots and analysis
-## Last updated by JB Dec 12 2016
+# Temperature size rule results
 
 
 
-# load packages -----------------------------------------------------------
-
-library(tidyverse)
-library(stringr)
-library(broom)
-
-# read in data ------------------------------------------------------------
-
-data3 <- read_csv("data-processed/data3.csv")
 
 
 
-# plots! ------------------------------------------------------------------
 
+### Background
+
+Something here about the TSR being the third 'universal' response to warming. However, the mechanisms responsible for this widespread pattern are unknown blah blah blah, particularly w/r/t whether being smaller at warmer temperatures is associated with higher fitness. Or else why would this pattern be so prevalent in nature?
+
+
+
+```r
+data3 <- read_csv("/Users/Joey/Documents/Daph-TSR/data-processed/data3.csv")
+```
+
+
+### Reproductive rate
+How does reproductive rate vary with temperature?
+![](04_TSR_results_files/figure-html/reproductive rate-1.png)<!-- -->
+
+
+```r
 data3 %>% 
 	filter(unique_id != "K_16") %>% ## something weird is going on here!
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
-	ggplot(data = ., aes(x = inverse_temp, y = log(time_to_first_clutch), label = id)) + geom_point(size = 4, color = "#619CFF") +
-	geom_smooth(method = "lm", color = "#619CFF") +
-	scale_x_reverse() + xlab("temperature (1/kT)") + ylab("ln time to reproductive maturity") + 
-	theme_minimal() + 
-	theme(axis.text.y   = element_text(size=20),
-				axis.text.x   = element_text(size=20),
-				axis.title.y  = element_text(size=20),
-				axis.title.x  = element_text(size=20),
-				panel.background = element_blank(),
-				panel.grid.major = element_blank(), 
-				panel.grid.minor = element_blank(),
-				axis.line = element_line(colour = "black"),
-				axis.ticks = element_line(size = 1)) +
-	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
-
-data3 %>% 
-	filter(unique_id != "K_16") %>% ## something weird is going on here!
-	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
-	do(tidy(lm(log(time_to_first_clutch) ~ inverse_temp, data = .), conf.int = TRUE)) %>% 
-	View
+	do(tidy(lm(log(time_to_first_clutch) ~ inverse_temp, data = .), conf.int = TRUE)) %>%
+	knitr::kable(.)
+```
 
 
-# time between clutches ---------------------------------------------------
 
-data3 %>% 
-	filter(unique_id != "K_16") %>% ## something weird is going on here!
-	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
-	ggplot(data = ., aes(x = inverse_temp, y = log(time_btw_1_2), label = id)) + geom_point(size = 4, color = "#619CFF") +
-	geom_smooth(method = "lm", color = "#619CFF") +
-	scale_x_reverse() + xlab("temperature (1/kT)") + ylab("time between clutches") +
-	theme_minimal() + 
-	theme(axis.text.y   = element_text(size=20),
-				axis.text.x   = element_text(size=20),
-				axis.title.y  = element_text(size=20),
-				axis.title.x  = element_text(size=20),
-				panel.background = element_blank(),
-				panel.grid.major = element_blank(), 
-				panel.grid.minor = element_blank(),
-				axis.line = element_line(colour = "black"),
-				axis.ticks = element_line(size = 1)) +
-	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
+term               estimate   std.error   statistic   p.value      conf.low    conf.high
+-------------  ------------  ----------  ----------  --------  ------------  -----------
+(Intercept)     -13.5224258   2.3825210    -5.67568   7.6e-06   -18.4397074   -8.6051442
+inverse_temp      0.4788195   0.0596525     8.02681   0.0e+00     0.3557027    0.6019362
 
+
+Time between clutches
+
+![](04_TSR_results_files/figure-html/time between clutches-1.png)<!-- -->
+
+
+```r
 ## time between clutches
 data3 %>% 
 	filter(unique_id != "K_16") %>% ## something weird is going on here!
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
-	do(tidy(lm(log(time_btw_1_2) ~ inverse_temp, data = .), conf.int = TRUE)) %>% 
-	View
+	do(tidy(lm(log(time_btw_1_2) ~ inverse_temp, data = .), conf.int = TRUE)) %>%
+	knitr::kable(.)
+```
 
 
-# body size ---------------------------------------------------------------
+
+term               estimate   std.error   statistic     p.value      conf.low    conf.high
+-------------  ------------  ----------  ----------  ----------  ------------  -----------
+(Intercept)     -19.7276177   5.1098596   -3.860697   0.0008466   -30.3248179   -9.1304174
+inverse_temp      0.6086533   0.1281431    4.749792   0.0000967     0.3429007    0.8744058
+
+### Body size
 
 
-data3 %>% 
-	filter(unique_id != "K_16") %>% ## something weird is going on here!
-	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
-	ggplot(data = ., aes(x = inverse_temp, y = log(length_at_4th_clutch), label = id)) + geom_point(size = 4, color = "#619CFF") +
-	geom_smooth(method = "lm", color = "#619CFF") +
-	scale_x_reverse() + xlab("temperature (1/kT)") + ylab("length at 1st clutch") 
-
+```r
 data4 <- data3 %>% 
 	gather(clutch_number, length, starts_with("length")) %>% 
 	mutate(clutch_number = str_replace(clutch_number, "length_at_1st_clutch", "1st clutch")) %>% 
@@ -108,11 +91,22 @@ data4 %>%
 				axis.ticks = element_line(size = 1),
 				legend.title = element_blank()) +
 	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
+```
+
+```
+## Warning: Removed 78 rows containing non-finite values (stat_smooth).
+```
+
+```
+## Warning: Removed 78 rows containing missing values (geom_point).
+```
+
+![](04_TSR_results_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+### Somatic growth rates
 
 
-
-# somatic growth rate -----------------------------------------------------
-
+```r
 ## get to somatic growth rate by taking the difference in length at 1st clutch and length at birth, divided by the days to first clutch
 
 data3 %>% 
@@ -134,36 +128,42 @@ data3 %>%
 				axis.ticks = element_line(size = 1),
 				legend.title = element_blank()) +
 	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
-	
+```
 
-### somatic growth rate vs temperature
+```
+## Warning: Removed 18 rows containing non-finite values (stat_smooth).
+```
+
+```
+## Warning: Removed 18 rows containing missing values (geom_point).
+```
+
+![](04_TSR_results_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
+
+```r
 data3 %>% 
 	filter(unique_id != "K_16") %>% ## something weird is going on here!
 	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%
 	mutate(somatic_growth_rate = ((length_at_1st_clutch - length_at_birth_um)/time_to_first_clutch)) %>%
-do(tidy(lm(log(somatic_growth_rate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% 
-	View
+do(tidy(lm(log(somatic_growth_rate) ~ inverse_temp, data = .), conf.int = TRUE)) %>%
+	knitr::kable(.)
+```
 
 
-data5 <- data3 %>% 
-	filter(unique_id != "K_16") %>% ## something weird is going on here!
-	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%
-	mutate(somatic_growth_rate = ((length_at_1st_clutch - length_at_birth_um)/time_to_first_clutch)) %>% 
-	select(unique_id, somatic_growth_rate)
+
+term              estimate   std.error   statistic   p.value     conf.low    conf.high
+-------------  -----------  ----------  ----------  --------  -----------  -----------
+(Intercept)     23.0958538   2.5278438    9.136583     1e-07   17.7625697   28.4291380
+inverse_temp     0.5404576   0.0632702    8.542051     1e-07    0.4069691    0.6739461
+
+### Size rate trade-off??
 
 
-data6 <- left_join(data4, data5)
+```r
+data7 <- read_csv("/Users/Joey/Documents/Daph-TSR/data-processed/data7.csv")
 
 
-max_lengths <- data6 %>% 
-	filter(clutch_number != "birth") %>% 
-	group_by(temperature, unique_id) %>% 
-	summarise(max_length = max(length, na.rm = TRUE)) 
-	
-data7 <- left_join(data6, max_lengths)
-
-write_csv(data7, "data-processed/data7.csv")
-	
 data7 %>% 
 	# filter(temperature > 13) %>% 
 ggplot(aes(x = somatic_growth_rate, y = max_length)) + geom_point(size = 4, color = "#619CFF", alpha = 0.5) +
@@ -181,3 +181,6 @@ geom_smooth(method = "lm", color = "#619CFF") +
 				axis.ticks = element_line(size = 1),
 				legend.title = element_blank()) +
 	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
+```
+
+![](04_TSR_results_files/figure-html/unnamed-chunk-8-1.png)<!-- -->

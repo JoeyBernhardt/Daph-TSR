@@ -69,16 +69,30 @@ lengths_all_adult <- lengths_all %>%
 	distinct(length, .keep_all = TRUE)
 write_csv(lengths_all_adult, "data-processed/lengths_all_adult.csv")
 
-
+lengths_all_adult <- read_csv("data-processed/lengths_all_adult.csv")
 
 lengths_all_adult %>% 
 filter(temperature > 10) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	filter(length > 1000) %>% 
-	group_by(temperature) %>% 
-	summarise_each(funs(mean, std.error), length) %>%
-	ggplot(aes(x = temperature, y = mean)) + geom_point(size = 4) +
+	group_by(inverse_temp) %>% 
+	summarise_each(funs(mean, min, max, std.error), length) %>%
+	ggplot(aes(x = inverse_temp, y = min)) + geom_point(size = 4) +
 	# geom_smooth() + 
-	geom_errorbar(aes(ymin = mean - std.error, ymax = mean + std.error), width = 0.1)
+	geom_errorbar(aes(ymin = min - std.error, ymax = min + std.error), width = 0.1) + 
+	scale_x_reverse() + xlab("temperature (1/kT)") + ylab("average adult body length (um)") +
+	theme_minimal() + 
+	theme(axis.text.y   = element_text(size=20),
+				axis.text.x   = element_text(size=20),
+				axis.title.y  = element_text(size=20),
+				axis.title.x  = element_text(size=20),
+				panel.background = element_blank(),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				axis.line = element_line(colour = "black"),
+				axis.ticks = element_line(size = 1),
+				legend.title = element_blank()) +
+	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
 
 
 ### OK next step is clean up the lengths_all_adult so we can get growth rates over time
