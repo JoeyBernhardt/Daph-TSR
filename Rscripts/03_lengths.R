@@ -61,6 +61,8 @@ lengths_all <- bind_rows(lengths_long4, lengths_2)
 
 write_csv(lengths_all, "data-processed/lengths_all.csv")
 
+lengths_all <- read_csv("data-processed/lengths_all.csv")
+
 
 lengths_all_adult <- lengths_all %>% 
 	filter(length > 1000) %>% 
@@ -86,3 +88,39 @@ filter(temperature > 10) %>%
 # lengths_all_adult %>% 
 # 	separate(ID, into = c("letter", "other"), sep = "[A-Z]", remove = FALSE) %>% View
 
+lengths_ann_raw <- read_csv("data-processed/lengths_all_adult_annotated.csv")
+lengths_all <- read_csv("data-processed/lengths_all.csv")
+
+
+lengths_ann <- lengths_ann_raw %>% 
+	mutate(date = mdy(date))
+
+lengths_birth <- lengths_all %>%
+	filter(life_stage == "birth") %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.2", "N")) %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.3", "N")) %>%
+	mutate(unique_id = str_replace(unique_id, "2N1.4", "N")) %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.8", "N")) %>%
+	mutate(unique_id = str_replace(unique_id, "2N1.5", "N")) %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.1", "N")) %>%
+	separate(unique_id, into = c("letter", "temp"), remove = FALSE) 
+
+
+str(lengths_ann)
+	
+lengths_b2m <- bind_rows(lengths_ann, lengths_birth)
+
+str(lengths_b2m)
+
+lengths_b2m %>% 
+	mutate(certainty = ifelse(life_stage == "birth", "yes", certainty)) %>% View
+
+### yes this is it!!
+lengths_b2m %>% 
+	mutate(certainty = ifelse(life_stage == "birth", "yes", certainty)) %>%
+	# filter(version == 2) %>%
+	filter(certainty == "yes") %>% 
+	# filter(life_stage == "birth") %>% 
+	# filter(temperature == 16) %>% 
+	ggplot(aes(date, y = length, color = letter, group = letter)) + geom_point(size = 3) +
+	geom_line() + facet_wrap( ~ temperature)
