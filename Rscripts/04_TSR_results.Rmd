@@ -131,7 +131,7 @@ data4 %>%
 
 ### Somatic growth rates
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
 ## get to somatic growth rate by taking the difference in length at 1st clutch and length at birth, divided by the days to first clutch
 
 data3 %>% 

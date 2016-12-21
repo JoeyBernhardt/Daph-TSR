@@ -90,14 +90,6 @@ data3 %>%
 	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
 ```
 
-```
-## Warning: Removed 18 rows containing non-finite values (stat_smooth).
-```
-
-```
-## Warning: Removed 18 rows containing missing values (geom_point).
-```
-
 ![](04_TSR_results_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 
