@@ -63,7 +63,7 @@ write_csv(lengths_all, "data-processed/lengths_all.csv")
 
 
 lengths_all_adult <- lengths_all %>% 
-	filter(length > 1000) %>% View
+	filter(length > 1000) %>% 
 	distinct(length, .keep_all = TRUE)
 
 lengths_all_adult %>% 
@@ -75,3 +75,14 @@ filter(temperature > 10) %>%
 	# geom_smooth() + 
 	geom_errorbar(aes(ymin = mean - std.error, ymax = mean + std.error), width = 0.1)
 
+
+### OK next step is clean up the lengths_all_adult so we can get growth rates over time
+
+### let's take lengths_all_adult, and see if we can extract the letter associated with each individual
+#nope this doesn't work
+# lengths_all_adult %>% 
+# 	separate(ID, into = c("letter", "other"), sep = "[A-Z]", remove = FALSE) %>% View
+
+
+?separate
+separate
