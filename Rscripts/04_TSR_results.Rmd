@@ -304,3 +304,46 @@ filter(temperature > 10) %>%
 	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
 ```
 
+Next step: bring in the fecundity data to merge with the size data
+
+```{r}
+
+lengths_clean <- lengths_all_adult %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.2", "N")) %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.3", "N")) %>%
+	mutate(unique_id = str_replace(unique_id, "2N1.4", "N")) %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.8", "N")) %>%
+	mutate(unique_id = str_replace(unique_id, "2N1.5", "N")) %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.1", "N")) %>% 
+	separate(unique_id, into = c("letter", "temperature"), remove = FALSE)
+
+data_raw <- read_csv("/Users/Joey/Documents/Daph-TSR/data-raw/DAPH-TSR-clutches.csv")
+v2_babies <- data_raw %>% 
+	filter(grepl("V2", ID)) %>% 
+	separate(ID, into = c("V", "letter"), sep = 2) %>% 
+	unite(unique_id, letter, temperature, sep = "_")
+
+all <- left_join(lengths_clean, v2_babies, by = "unique_id")
+
+ggplot(data = all, aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4)
+
+
+	
+```	
+
+For a given temperature, plot size vs. number of individuals
+
+```{r}
+
+all %>% 
+	# filter(temperature == 24) %>% 
+ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + facet_wrap( ~ temperature)
+```
+
+```{r}
+all %>% 
+	filter(letter == "F") %>%
+ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) ### something weird is going on here w/r/t number of individuals getting copied too many times.
+
+```
+	

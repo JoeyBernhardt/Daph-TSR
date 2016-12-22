@@ -102,3 +102,72 @@ Maximum adult body size
 Mean adult body size
 ![](04_TSR_results_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
+Next step: bring in the fecundity data to merge with the size data
+
+
+```r
+lengths_clean <- lengths_all_adult %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.2", "N")) %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.3", "N")) %>%
+	mutate(unique_id = str_replace(unique_id, "2N1.4", "N")) %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.8", "N")) %>%
+	mutate(unique_id = str_replace(unique_id, "2N1.5", "N")) %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.1", "N")) %>% 
+	separate(unique_id, into = c("letter", "temperature"), remove = FALSE)
+
+data_raw <- read_csv("/Users/Joey/Documents/Daph-TSR/data-raw/DAPH-TSR-clutches.csv")
+```
+
+```
+## Parsed with column specification:
+## cols(
+##   ID = col_character(),
+##   temperature = col_integer(),
+##   clutch_number = col_integer(),
+##   individuals = col_integer(),
+##   clutch_date = col_character(),
+##   sample_date = col_character()
+## )
+```
+
+```r
+v2_babies <- data_raw %>% 
+	filter(grepl("V2", ID)) %>% 
+	separate(ID, into = c("V", "letter"), sep = 2) %>% 
+	unite(unique_id, letter, temperature, sep = "_")
+
+all <- left_join(lengths_clean, v2_babies, by = "unique_id")
+
+ggplot(data = all, aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4)
+```
+
+```
+## Warning: Removed 248 rows containing missing values (geom_point).
+```
+
+![](04_TSR_results_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+For a given temperature, plot size vs. number of individuals
+
+
+```r
+all %>% 
+	# filter(temperature == 24) %>% 
+ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + facet_wrap( ~ temperature)
+```
+
+```
+## Warning: Removed 248 rows containing missing values (geom_point).
+```
+
+![](04_TSR_results_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+
+
+```r
+all %>% 
+	filter(letter == "F") %>%
+ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) ### something weird is going on here w/r/t number of individuals getting copied too many times.
+```
+
+![](04_TSR_results_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+	
