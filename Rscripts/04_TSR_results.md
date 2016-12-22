@@ -113,8 +113,14 @@ lengths_clean <- lengths_all_adult %>%
 	mutate(unique_id = str_replace(unique_id, "2N1.8", "N")) %>%
 	mutate(unique_id = str_replace(unique_id, "2N1.5", "N")) %>% 
 	mutate(unique_id = str_replace(unique_id, "2N1.1", "N")) %>% 
-	separate(unique_id, into = c("letter", "temperature"), remove = FALSE)
+	separate(unique_id, into = c("letter", "temp"), remove = FALSE) %>% 
+	mutate(life_stage = ifelse(life_stage == "1", "clutch_1", life_stage)) %>% 
+	mutate(life_stage = ifelse(life_stage == "2", "clutch_2", life_stage)) %>%
+	mutate(life_stage = ifelse(life_stage == "3", "clutch_3", life_stage)) %>%
+	mutate(life_stage = ifelse(life_stage == "4", "clutch_4", life_stage)) %>% 
+	rename(clutch_number = life_stage)
 
+	
 data_raw <- read_csv("/Users/Joey/Documents/Daph-TSR/data-raw/DAPH-TSR-clutches.csv")
 ```
 
@@ -123,7 +129,7 @@ data_raw <- read_csv("/Users/Joey/Documents/Daph-TSR/data-raw/DAPH-TSR-clutches.
 ## cols(
 ##   ID = col_character(),
 ##   temperature = col_integer(),
-##   clutch_number = col_integer(),
+##   clutch_number = col_character(),
 ##   individuals = col_integer(),
 ##   clutch_date = col_character(),
 ##   sample_date = col_character()
@@ -139,33 +145,33 @@ v2_babies <- data_raw %>%
 
 data_raw %>% 
 	filter(str_detect(ID, "N")) %>% 
-	arrange(temperature, clutch_number) ### come back to filling out the clutch number business here, it's clearly not totally complete!
+	arrange(temperature, clutch_number)### come back to filling out the clutch number business here, it's clearly not totally complete!
 ```
 
 ```
 ## # A tibble: 10 × 6
 ##       ID temperature clutch_number individuals   clutch_date   sample_date
-##    <chr>       <int>         <int>       <int>         <chr>         <chr>
-## 1    V2N          16             1           2  July 19 2016 August 5 2016
-## 2    V2N          16             2           4  July 23 2016 August 5 2016
-## 3    V2N          16             3           0 August 1 2016 August 8 2016
-## 4    V2N          16             4           9 August 4 2016 August 5 2016
-## 5    V2N          20             1          14  July 13 2016  July 18 2016
-## 6    V2N          20             1          17  July 16 2016  July 18 2016
-## 7    V2N          20             2          15  July 19 2016 August 5 2016
-## 8    V2N          20             3           5  July 21 2016 August 5 2016
-## 9    V2N          24             3           5  July 20 2016 August 5 2016
-## 10   V2N          24             4           0  July 22 2016 August 5 2016
+##    <chr>       <int>         <chr>       <int>         <chr>         <chr>
+## 1    V2N          16      clutch_1           2  July 19 2016 August 5 2016
+## 2    V2N          16      clutch_2           4  July 23 2016 August 5 2016
+## 3    V2N          16      clutch_3           0 August 1 2016 August 8 2016
+## 4    V2N          16      clutch_4           9 August 4 2016 August 5 2016
+## 5    V2N          20      clutch_1          14  July 13 2016  July 18 2016
+## 6    V2N          20      clutch_1          17  July 16 2016  July 18 2016
+## 7    V2N          20      clutch_2          15  July 19 2016 August 5 2016
+## 8    V2N          20      clutch_3           5  July 21 2016 August 5 2016
+## 9    V2N          24      clutch_3           5  July 20 2016 August 5 2016
+## 10   V2N          24      clutch_4           0  July 22 2016 August 5 2016
 ```
 
 ```r
-all <- left_join(lengths_clean, v2_babies, by = "unique_id")
+all <- left_join(lengths_clean, v2_babies, by = c("unique_id", "clutch_number"))
 
 ggplot(data = all, aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4)
 ```
 
 ```
-## Warning: Removed 248 rows containing missing values (geom_point).
+## Warning: Removed 266 rows containing missing values (geom_point).
 ```
 
 ![](04_TSR_results_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
@@ -180,16 +186,25 @@ ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) 
 ```
 
 ```
-## Warning: Removed 248 rows containing missing values (geom_point).
+## Warning: Removed 266 rows containing missing values (geom_point).
 ```
 
 ![](04_TSR_results_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
-
+How do we answer the question: is being smaller at a given temperature maximizing your fitness?
 
 ```r
 all %>% 
-	filter(letter == "F") %>%
-ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) ### something weird is going on here w/r/t number of individuals getting copied too many times. Ok clearly we need to fix this!!
+	# filter(temperature == 24) %>%
+ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + geom_smooth(method = "lm") +
+	facet_wrap( ~ temperature)
+```
+
+```
+## Warning: Removed 266 rows containing non-finite values (stat_smooth).
+```
+
+```
+## Warning: Removed 266 rows containing missing values (geom_point).
 ```
 
 ![](04_TSR_results_files/figure-html/unnamed-chunk-14-1.png)<!-- -->

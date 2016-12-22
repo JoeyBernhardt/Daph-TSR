@@ -333,7 +333,7 @@ v2_babies <- data_raw %>%
 
 data_raw %>% 
 	filter(str_detect(ID, "N")) %>% 
-	arrange(temperature, clutch_number) %>% View ### come back to filling out the clutch number business here, it's clearly not totally complete!
+	arrange(temperature, clutch_number)### come back to filling out the clutch number business here, it's clearly not totally complete!
 
 
 all <- left_join(lengths_clean, v2_babies, by = c("unique_id", "clutch_number"))
@@ -352,11 +352,16 @@ all %>%
 	# filter(temperature == 24) %>% 
 ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + facet_wrap( ~ temperature)
 ```
-
+How do we answer the question: is being smaller at a given temperature maximizing your fitness?
 ```{r}
+
 all %>% 
-	filter(letter == "F") %>%
-ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) ### something weird is going on here w/r/t number of individuals getting copied too many times. Ok clearly we need to fix this!!
+	# filter(temperature == 24) %>%
+ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + geom_smooth(method = "lm") +
+	facet_wrap( ~ temperature)
+
+
+
 
 ```
 	
