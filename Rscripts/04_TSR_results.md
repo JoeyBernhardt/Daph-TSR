@@ -88,21 +88,21 @@ inverse_temp     0.5404576   0.0632702    8.542051     1e-07    0.4069691    0.6
 
 ![](04_TSR_results_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
-Body size over time
+#### Body size over time
 ![](04_TSR_results_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 
-Minimum adult body size
+#### Minimum adult body size
 ![](04_TSR_results_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 
-Maximum adult body size
+#### Maximum adult body size
 ![](04_TSR_results_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
-Mean adult body size
+#### Mean adult body size
 ![](04_TSR_results_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
-Next step: bring in the fecundity data to merge with the size data
+#### Next step: bring in the fecundity data to merge with the size data
 
 
 ```r
@@ -185,12 +185,8 @@ For a given temperature, plot size vs. number of individuals
 
 ```r
 all %>% 
-	# filter(temperature == 24) %>% 
+filter(individuals != 0) %>% 
 ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + facet_wrap( ~ temperature)
-```
-
-```
-## Warning: Removed 258 rows containing missing values (geom_point).
 ```
 
 ![](04_TSR_results_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
@@ -201,7 +197,7 @@ all %>%
 	filter(individuals != 0) %>% 
 	# filter(temperature == 24) %>%
 ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + geom_smooth(method = "lm") +
-	facet_wrap( ~ temperature)
+	facet_wrap( ~ temperature, scales = "free")
 ```
 
 ![](04_TSR_results_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
@@ -209,11 +205,99 @@ ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) 
 
 ```r
 all %>% 
-	filter(temperature == 12) %>%
+	filter(temperature == 24) %>%
 	filter(individuals != 0) %>% 
-ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + geom_smooth(method = "lm") +
+ggplot(data = ., aes(x = length, y = individuals)) + geom_point(aes(color = factor(letter)), size = 4) + geom_smooth(method = "lm") +
 	facet_wrap( ~ temperature)
 ```
 
 ![](04_TSR_results_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
+
+Ok so what I think we are seeing is that on a per individual clutch basis, there is still a positive relationship between body size and number of individuals per clutch...which I guess is not surprising...but maybe a more accurate measure of fitness is the number of offspring per unit time??? Maybe I should have looked at total lifetime reproductive output, not the number of offspring per clutch? It's clear that the warmer invidividuals pump through more clutches per unit time. Maybe I should look at whether within a temperature, you get through more clutches if you are smaller?
+
+
+Maybe I should take the time to first reproduction and average clutch size and somehow plot that versus size at temperature?
+
+
+```r
+data3_select <- data3 %>% 
+	select(id, temperature, time_to_first_clutch, length_at_1st_clutch, length_at_2nd_clutch_um) %>% 
+	mutate(id = str_replace(id, "2N1.2", "N")) %>% 
+	mutate(id = str_replace(id, "2N1.3", "N")) %>%
+	mutate(id = str_replace(id, "2N1.1", "N")) %>%
+	mutate(id = str_replace(id, "2N1.4", "N")) %>%
+	mutate(id = str_replace(id, "2N1.5", "N"))
+	
+	
+
+
+data3_select %>% 
+	filter(time_to_first_clutch != 1176) %>% 
+	filter(temperature > 13) %>% 
+	ggplot(data = ., aes(x = time_to_first_clutch, y = length_at_1st_clutch, color = factor(temperature), label = id)) + geom_point(size = 4) + geom_smooth(method = "lm")
+```
+
+```
+## Warning: Removed 3 rows containing non-finite values (stat_smooth).
+```
+
+```
+## Warning: Removed 3 rows containing missing values (geom_point).
+```
+
+![](04_TSR_results_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+
+```r
+data3_select %>% 
+	filter(time_to_first_clutch != 1176) %>% 
+	filter(temperature > 13) %>% 
+	ggplot(data = ., aes(x = time_to_first_clutch, y = length_at_1st_clutch)) + geom_point(aes(color = factor(temperature)), size = 4) + geom_smooth(method = "lm")
+```
+
+```
+## Warning: Removed 3 rows containing non-finite values (stat_smooth).
+
+## Warning: Removed 3 rows containing missing values (geom_point).
+```
+
+![](04_TSR_results_files/figure-html/unnamed-chunk-16-2.png)<!-- -->
+
+```r
+tidy(lm(length_at_1st_clutch ~ time_to_first_clutch, data = data3_select), conf.int = TRUE)
+```
+
+```
+##                   term     estimate  std.error statistic      p.value
+## 1          (Intercept) 1877.3353429 82.8180744 22.668184 9.579253e-17
+## 2 time_to_first_clutch    0.5647173  0.2083568  2.710338 1.277848e-02
+##       conf.low    conf.high
+## 1 1705.5811688 2049.0895169
+## 2    0.1326119    0.9968228
+```
+
+```r
+summary(lm(length_at_1st_clutch ~ time_to_first_clutch, data = data3_select))
+```
+
+```
+## 
+## Call:
+## lm(formula = length_at_1st_clutch ~ time_to_first_clutch, data = data3_select)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -430.49 -133.07  -54.05  176.50  381.44 
+## 
+## Coefficients:
+##                       Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)          1877.3353    82.8181   22.67   <2e-16 ***
+## time_to_first_clutch    0.5647     0.2084    2.71   0.0128 *  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 221.5 on 22 degrees of freedom
+##   (14 observations deleted due to missingness)
+## Multiple R-squared:  0.2503,	Adjusted R-squared:  0.2162 
+## F-statistic: 7.346 on 1 and 22 DF,  p-value: 0.01278
+```

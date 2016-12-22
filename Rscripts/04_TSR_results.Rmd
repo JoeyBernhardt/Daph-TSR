@@ -189,7 +189,7 @@ geom_smooth(method = "lm", color = "#619CFF") +
 	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
 ```
 
-Body size over time
+#### Body size over time
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 lengths_ann_raw <- read_csv("/Users/Joey/Documents/Daph-TSR/data-processed/lengths_all_adult_annotated.csv")
 lengths_all <- read_csv("/Users/Joey/Documents/Daph-TSR/data-processed/lengths_all.csv")
@@ -223,7 +223,7 @@ lengths_b2m %>%
 ```
 
 
-Minimum adult body size
+#### Minimum adult body size
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 lengths_all_adult <- read_csv("/Users/Joey/Documents/Daph-TSR/data-processed/lengths_all_adult.csv")
 
@@ -252,7 +252,7 @@ filter(temperature > 10) %>%
 ```
 
 
-Maximum adult body size
+#### Maximum adult body size
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 lengths_all_adult %>% 
 filter(temperature > 10) %>% 
@@ -278,7 +278,7 @@ filter(temperature > 10) %>%
 	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
 ```
 
-Mean adult body size
+#### Mean adult body size
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 lengths_all_adult %>% 
 filter(temperature > 10) %>% 
@@ -304,7 +304,7 @@ filter(temperature > 10) %>%
 	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
 ```
 
-Next step: bring in the fecundity data to merge with the size data
+#### Next step: bring in the fecundity data to merge with the size data
 
 ```{r}
 
@@ -349,7 +349,7 @@ For a given temperature, plot size vs. number of individuals
 ```{r}
 
 all %>% 
-	# filter(temperature == 24) %>% 
+filter(individuals != 0) %>% 
 ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + facet_wrap( ~ temperature)
 ```
 How do we answer the question: is being smaller at a given temperature maximizing your fitness?
@@ -359,14 +359,46 @@ all %>%
 	filter(individuals != 0) %>% 
 	# filter(temperature == 24) %>%
 ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + geom_smooth(method = "lm") +
-	facet_wrap( ~ temperature)
+	facet_wrap( ~ temperature, scales = "free")
 ```
 	
 ```{r}
 all %>% 
-	filter(temperature == 12) %>%
+	filter(temperature == 24) %>%
 	filter(individuals != 0) %>% 
-ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + geom_smooth(method = "lm") +
+ggplot(data = ., aes(x = length, y = individuals)) + geom_point(aes(color = factor(letter)), size = 4) + geom_smooth(method = "lm") +
 	facet_wrap( ~ temperature)
 ```
 
+
+Ok so what I think we are seeing is that on a per individual clutch basis, there is still a positive relationship between body size and number of individuals per clutch...which I guess is not surprising...but maybe a more accurate measure of fitness is the number of offspring per unit time??? Maybe I should have looked at total lifetime reproductive output, not the number of offspring per clutch? It's clear that the warmer invidividuals pump through more clutches per unit time. Maybe I should look at whether within a temperature, you get through more clutches if you are smaller?
+
+
+Maybe I should take the time to first reproduction and average clutch size and somehow plot that versus size at temperature?
+
+```{r}
+
+data3_select <- data3 %>% 
+	select(id, temperature, time_to_first_clutch, length_at_1st_clutch, length_at_2nd_clutch_um) %>% 
+	mutate(id = str_replace(id, "2N1.2", "N")) %>% 
+	mutate(id = str_replace(id, "2N1.3", "N")) %>%
+	mutate(id = str_replace(id, "2N1.1", "N")) %>%
+	mutate(id = str_replace(id, "2N1.4", "N")) %>%
+	mutate(id = str_replace(id, "2N1.5", "N"))
+	
+	
+
+
+data3_select %>% 
+	filter(time_to_first_clutch != 1176) %>% 
+	filter(temperature > 13) %>% 
+	ggplot(data = ., aes(x = time_to_first_clutch, y = length_at_1st_clutch, color = factor(temperature), label = id)) + geom_point(size = 4) + geom_smooth(method = "lm")
+
+data3_select %>% 
+	filter(time_to_first_clutch != 1176) %>% 
+	filter(temperature > 13) %>% 
+	ggplot(data = ., aes(x = time_to_first_clutch, y = length_at_1st_clutch)) + geom_point(aes(color = factor(temperature)), size = 4) + geom_smooth(method = "lm")
+
+tidy(lm(length_at_1st_clutch ~ time_to_first_clutch, data = data3_select), conf.int = TRUE)
+summary(lm(length_at_1st_clutch ~ time_to_first_clutch, data = data3_select))
+```
