@@ -65,31 +65,6 @@ inverse_temp      0.6086533   0.1281431    4.749792   0.0000967     0.3429007   
 
 ### Somatic growth rates
 
-
-```r
-## get to somatic growth rate by taking the difference in length at 1st clutch and length at birth, divided by the days to first clutch
-
-data3 %>% 
-	filter(unique_id != "K_16") %>% ## something weird is going on here!
-	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
-	mutate(somatic_growth_rate = ((length_at_1st_clutch - length_at_birth_um)/time_to_first_clutch)) %>%
-	ggplot(data = ., aes(x = inverse_temp, y = log(somatic_growth_rate), label = id)) + geom_point(size = 4, color = "#619CFF", alpha = 0.5) +
-	geom_smooth(method = "lm", color = "#619CFF") +
-	scale_x_reverse() + xlab("temperature (1/kT)") + ylab("ln somatic growth rate (um/day)") +
-	theme_minimal() + 
-	theme(axis.text.y   = element_text(size=20),
-				axis.text.x   = element_text(size=20),
-				axis.title.y  = element_text(size=20),
-				axis.title.x  = element_text(size=20),
-				panel.background = element_blank(),
-				panel.grid.major = element_blank(), 
-				panel.grid.minor = element_blank(),
-				axis.line = element_line(colour = "black"),
-				axis.ticks = element_line(size = 1),
-				legend.title = element_blank()) +
-	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
-```
-
 ![](04_TSR_results_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 
@@ -112,3 +87,18 @@ inverse_temp     0.5404576   0.0632702    8.542051     1e-07    0.4069691    0.6
 ### Size rate trade-off??
 
 ![](04_TSR_results_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+Body size over time
+![](04_TSR_results_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+
+Minimum adult body size
+![](04_TSR_results_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+
+Maximum adult body size
+![](04_TSR_results_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+Mean adult body size
+![](04_TSR_results_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
