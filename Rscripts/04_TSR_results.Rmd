@@ -323,6 +323,12 @@ v2_babies <- data_raw %>%
 	separate(ID, into = c("V", "letter"), sep = 2) %>% 
 	unite(unique_id, letter, temperature, sep = "_")
 
+
+data_raw %>% 
+	filter(str_detect(ID, "N")) %>% 
+	arrange(temperature, clutch_number) ### come back to filling out the clutch number business here, it's clearly not totally complete!
+
+
 all <- left_join(lengths_clean, v2_babies, by = "unique_id")
 
 ggplot(data = all, aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4)
@@ -343,7 +349,7 @@ ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) 
 ```{r}
 all %>% 
 	filter(letter == "F") %>%
-ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) ### something weird is going on here w/r/t number of individuals getting copied too many times.
+ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) ### something weird is going on here w/r/t number of individuals getting copied too many times. Ok clearly we need to fix this!!
 
 ```
 	

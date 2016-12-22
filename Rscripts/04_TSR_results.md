@@ -136,6 +136,29 @@ v2_babies <- data_raw %>%
 	separate(ID, into = c("V", "letter"), sep = 2) %>% 
 	unite(unique_id, letter, temperature, sep = "_")
 
+
+data_raw %>% 
+	filter(str_detect(ID, "N")) %>% 
+	arrange(temperature, clutch_number) ### come back to filling out the clutch number business here, it's clearly not totally complete!
+```
+
+```
+## # A tibble: 10 × 6
+##       ID temperature clutch_number individuals   clutch_date   sample_date
+##    <chr>       <int>         <int>       <int>         <chr>         <chr>
+## 1    V2N          16             1           2  July 19 2016 August 5 2016
+## 2    V2N          16             2           4  July 23 2016 August 5 2016
+## 3    V2N          16             3           0 August 1 2016 August 8 2016
+## 4    V2N          16             4           9 August 4 2016 August 5 2016
+## 5    V2N          20             1          14  July 13 2016  July 18 2016
+## 6    V2N          20             1          17  July 16 2016  July 18 2016
+## 7    V2N          20             2          15  July 19 2016 August 5 2016
+## 8    V2N          20             3           5  July 21 2016 August 5 2016
+## 9    V2N          24             3           5  July 20 2016 August 5 2016
+## 10   V2N          24             4           0  July 22 2016 August 5 2016
+```
+
+```r
 all <- left_join(lengths_clean, v2_babies, by = "unique_id")
 
 ggplot(data = all, aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4)
@@ -166,7 +189,7 @@ ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) 
 ```r
 all %>% 
 	filter(letter == "F") %>%
-ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) ### something weird is going on here w/r/t number of individuals getting copied too many times.
+ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) ### something weird is going on here w/r/t number of individuals getting copied too many times. Ok clearly we need to fix this!!
 ```
 
 ![](04_TSR_results_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
