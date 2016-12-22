@@ -356,12 +356,17 @@ How do we answer the question: is being smaller at a given temperature maximizin
 ```{r}
 
 all %>% 
+	filter(individuals != 0) %>% 
 	# filter(temperature == 24) %>%
 ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + geom_smooth(method = "lm") +
 	facet_wrap( ~ temperature)
-
-
-
-
 ```
 	
+```{r}
+all %>% 
+	filter(temperature == 12) %>%
+	filter(individuals != 0) %>% 
+ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + geom_smooth(method = "lm") +
+	facet_wrap( ~ temperature)
+```
+

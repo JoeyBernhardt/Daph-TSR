@@ -149,7 +149,7 @@ data_raw %>%
 ```
 
 ```
-## # A tibble: 10 × 6
+## # A tibble: 14 × 6
 ##       ID temperature clutch_number individuals   clutch_date   sample_date
 ##    <chr>       <int>         <chr>       <int>         <chr>         <chr>
 ## 1    V2N          16      clutch_1           2  July 19 2016 August 5 2016
@@ -160,8 +160,12 @@ data_raw %>%
 ## 6    V2N          20      clutch_1          17  July 16 2016  July 18 2016
 ## 7    V2N          20      clutch_2          15  July 19 2016 August 5 2016
 ## 8    V2N          20      clutch_3           5  July 21 2016 August 5 2016
-## 9    V2N          24      clutch_3           5  July 20 2016 August 5 2016
-## 10   V2N          24      clutch_4           0  July 22 2016 August 5 2016
+## 9    V2N          24      clutch_1           9  July 17 2016          <NA>
+## 10   V2N          24      clutch_2          18  July 18 2016          <NA>
+## 11   V2N          24      clutch_3           5  July 20 2016 August 5 2016
+## 12   V2N          24      clutch_3          NA  July 20 2016          <NA>
+## 13   V2N          24      clutch_4           0  July 22 2016 August 5 2016
+## 14   V2N          24      clutch_4          NA  July 22 2016          <NA>
 ```
 
 ```r
@@ -171,7 +175,7 @@ ggplot(data = all, aes(x = length, y = individuals, color = factor(temperature))
 ```
 
 ```
-## Warning: Removed 266 rows containing missing values (geom_point).
+## Warning: Removed 258 rows containing missing values (geom_point).
 ```
 
 ![](04_TSR_results_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
@@ -186,7 +190,7 @@ ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) 
 ```
 
 ```
-## Warning: Removed 266 rows containing missing values (geom_point).
+## Warning: Removed 258 rows containing missing values (geom_point).
 ```
 
 ![](04_TSR_results_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
@@ -194,18 +198,22 @@ How do we answer the question: is being smaller at a given temperature maximizin
 
 ```r
 all %>% 
+	filter(individuals != 0) %>% 
 	# filter(temperature == 24) %>%
 ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + geom_smooth(method = "lm") +
 	facet_wrap( ~ temperature)
 ```
 
-```
-## Warning: Removed 266 rows containing non-finite values (stat_smooth).
-```
-
-```
-## Warning: Removed 266 rows containing missing values (geom_point).
-```
-
 ![](04_TSR_results_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 	
+
+```r
+all %>% 
+	filter(temperature == 12) %>%
+	filter(individuals != 0) %>% 
+ggplot(data = ., aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4) + geom_smooth(method = "lm") +
+	facet_wrap( ~ temperature)
+```
+
+![](04_TSR_results_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+
