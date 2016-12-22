@@ -315,9 +315,16 @@ lengths_clean <- lengths_all_adult %>%
 	mutate(unique_id = str_replace(unique_id, "2N1.8", "N")) %>%
 	mutate(unique_id = str_replace(unique_id, "2N1.5", "N")) %>% 
 	mutate(unique_id = str_replace(unique_id, "2N1.1", "N")) %>% 
-	separate(unique_id, into = c("letter", "temperature"), remove = FALSE)
+	separate(unique_id, into = c("letter", "temp"), remove = FALSE) %>% 
+	mutate(life_stage = ifelse(life_stage == "1", "clutch_1", life_stage)) %>% 
+	mutate(life_stage = ifelse(life_stage == "2", "clutch_2", life_stage)) %>%
+	mutate(life_stage = ifelse(life_stage == "3", "clutch_3", life_stage)) %>%
+	mutate(life_stage = ifelse(life_stage == "4", "clutch_4", life_stage)) %>% 
+	rename(clutch_number = life_stage)
 
+	
 data_raw <- read_csv("/Users/Joey/Documents/Daph-TSR/data-raw/DAPH-TSR-clutches.csv")
+
 v2_babies <- data_raw %>% 
 	filter(grepl("V2", ID)) %>% 
 	separate(ID, into = c("V", "letter"), sep = 2) %>% 
@@ -326,10 +333,10 @@ v2_babies <- data_raw %>%
 
 data_raw %>% 
 	filter(str_detect(ID, "N")) %>% 
-	arrange(temperature, clutch_number) ### come back to filling out the clutch number business here, it's clearly not totally complete!
+	arrange(temperature, clutch_number) %>% View ### come back to filling out the clutch number business here, it's clearly not totally complete!
 
 
-all <- left_join(lengths_clean, v2_babies, by = "unique_id")
+all <- left_join(lengths_clean, v2_babies, by = c("unique_id", "clutch_number"))
 
 ggplot(data = all, aes(x = length, y = individuals, color = factor(temperature))) + geom_point(size = 4)
 
