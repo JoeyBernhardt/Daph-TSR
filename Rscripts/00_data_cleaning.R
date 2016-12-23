@@ -1,6 +1,6 @@
 #### Loading and cleaning the daph-tsr data
 #### Last updated Dec 05 2016 by JB
-#### Last updated Dec 20 2016 with the long format of the length data sheet 
+#### Last updated Dec 20 2016 by JB with the long format of the length data sheet 
 
 # libraries ---------------------------------------------------------------
 
