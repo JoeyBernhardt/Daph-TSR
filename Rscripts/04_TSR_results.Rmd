@@ -87,6 +87,30 @@ data3 %>%
 	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
 ```
 
+Time to 4th clutch
+
+```{r time between clutches, echo=FALSE, warning=FALSE}
+data3 %>% 
+	filter(unique_id != "K_16") %>% ## something weird is going on here!
+	filter(temperature > 12) %>% 
+	mutate(time_to_clutch4 = time_to_first_clutch + time_btw_1_2 + time_bwn_2_3 + time_bwn_3_4) %>% 
+	group_by(temperature) %>% 
+	ggplot(data = ., aes(x = length_at_1st_clutch, y = time_to_first_clutch, color = factor(temperature))) + geom_point(size = 4) +
+	geom_smooth(method = "lm") +
+ xlab("body size") + ylab("time to 1st clutch") +
+	theme_minimal() + 
+	theme(axis.text.y   = element_text(size=20),
+				axis.text.x   = element_text(size=20),
+				axis.title.y  = element_text(size=20),
+				axis.title.x  = element_text(size=20),
+				panel.background = element_blank(),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				axis.line = element_line(colour = "black"),
+				axis.ticks = element_line(size = 1)) +
+	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
+```
+
 ```{r}
 ## time between clutches
 data3 %>% 
@@ -172,7 +196,7 @@ data7 <- read_csv("/Users/Joey/Documents/Daph-TSR/data-processed/data7.csv")
 
 data7 %>% 
 	# filter(temperature > 13) %>% 
-ggplot(aes(x = somatic_growth_rate, y = max_length)) + geom_point(size = 4, color = "#619CFF", alpha = 0.5) +
+ggplot(aes(x = somatic_growth_rate, y = max_length, color = factor(temperature))) + geom_point(size = 4, alpha = 0.5) +
 geom_smooth(method = "lm", color = "#619CFF") +
 	xlab("somatic growth rate (um/day)") + ylab("max body length (um)") +
 	theme_minimal() + 
@@ -189,10 +213,78 @@ geom_smooth(method = "lm", color = "#619CFF") +
 	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
 ```
 
+```{r}
+data7 %>% 
+# filter(clutch_number == "1st clutch") %>% 
+	filter(temperature > 13) %>% 
+		mutate(growth_rate_per_hour = somatic_growth_rate/24) %>% 
+ggplot(aes(x = growth_rate_per_hour, y = max_length, color = factor(temperature))) + geom_point(size = 4, alpha = 0.5) +
+geom_smooth(method = "lm", color = "#619CFF") +
+	xlab("somatic growth rate (um/hour)") + ylab("max length (um)") +
+	theme_minimal() 
+
+
+data7 %>% 
+	filter(temperature > 10) %>% 
+	mutate(growth_rate_per_hour = somatic_growth_rate/24) %>% 
+do(tidy(lm(log(max_length) ~ growth_rate_per_hour, data = .), conf.int = TRUE)) %>% View
+
+```
+
+```{r}
+data3 %>% 
+	filter(temperature > 10) %>% 
+	mutate(time_to_mat = date_of_1st_clutch - date_of_birth_m_d_y) %>%
+	mutate(time_to_mat = as.numeric(as.character(time_to_mat))) %>% 
+	group_by(temperature) %>%
+ggplot(aes(x =length_at_1st_clutch, y = 1/time_to_mat, color = factor(temperature))) + geom_point(size = 4, alpha = 0.5) +
+geom_smooth(method = "lm") +
+	facet_wrap( ~ temperature, scales = "free") +
+	xlab("length at first clutch") + ylab("reproductive rate (1/time to maturity)") +
+	theme_minimal() + 
+	theme(axis.text.y   = element_text(size=10),
+				axis.text.x   = element_text(size=10),
+				axis.title.y  = element_text(size=12),
+				axis.title.x  = element_text(size=12),
+				panel.background = element_blank(),
+				panel.grid.major = element_blank(), 
+				panel.grid.minor = element_blank(),
+				axis.line = element_line(colour = "black"),
+				axis.ticks = element_line(size = 1),
+				legend.title = element_blank()) +
+	theme(panel.border = element_blank(), axis.line = element_line(colour="black", size=1, lineend="square"))
+ggsave("figures/size_v_reproductive_rate.png", width = 6, height = 4)
+ggsave("figures/first_clutch_length_v_reproductive_rate.png", width = 6, height = 4)
+```
+
 #### Body size over time
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 lengths_ann_raw <- read_csv("/Users/Joey/Documents/Daph-TSR/data-processed/lengths_all_adult_annotated.csv")
 lengths_all <- read_csv("/Users/Joey/Documents/Daph-TSR/data-processed/lengths_all.csv")
+
+
+lengths_all_clean <- lengths_all %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.2", "N")) %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.3", "N")) %>%
+	mutate(unique_id = str_replace(unique_id, "2N1.4", "N")) %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.8", "N")) %>%
+	mutate(unique_id = str_replace(unique_id, "2N1.5", "N")) %>% 
+	mutate(unique_id = str_replace(unique_id, "2N1.1", "N")) %>%
+	separate(unique_id, into = c("letter", "temp"), remove = FALSE) %>%
+	mutate(id = ifelse(is.na(id), ID, id)) %>% 
+	mutate(unique_letter = str_extract(ID, "[A-Z]")) %>% 
+	mutate(letter = ifelse(is.na(letter), unique_letter, letter)) %>%
+	mutate(temp = ifelse(is.na(temp), temperature, temp)) 
+
+
+lengths_all_clean %>% 
+	filter(length > 1000) %>%
+	select(temp, letter, date, length, version) %>% 
+	filter(!is.na(temp)) %>% 
+	group_by(temp) %>% 
+	summarise_each(funs(mean, std.error, min), length) %>% 
+	ggplot(aes(x = temp, y = mean)) + geom_point() +
+	geom_errorbar(aes(ymin= mean - std.error, ymax = mean + std.error))
 
 
 lengths_ann <- lengths_ann_raw %>% 
@@ -372,6 +464,8 @@ ggplot(data = ., aes(x = length, y = individuals)) + geom_point(aes(color = fact
 
 
 Ok so what I think we are seeing is that on a per individual clutch basis, there is still a positive relationship between body size and number of individuals per clutch...which I guess is not surprising...but maybe a more accurate measure of fitness is the number of offspring per unit time??? Maybe I should have looked at total lifetime reproductive output, not the number of offspring per clutch? It's clear that the warmer invidividuals pump through more clutches per unit time. Maybe I should look at whether within a temperature, you get through more clutches if you are smaller?
+
+OK, so update: here's what I think I need to do...plot time to 4th clutch vs. size! Do you get through more clutches more quickly when you're smaller??
 
 
 Maybe I should take the time to first reproduction and average clutch size and somehow plot that versus size at temperature?
