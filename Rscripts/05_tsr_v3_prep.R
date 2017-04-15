@@ -70,16 +70,6 @@ kd %>%
 	facet_wrap( ~ temperature_c)
 
 
-kd %>% 
-	filter(actual_size_um > 0) %>%
-	select(temperature_c, replicate, actual_size_um, stage, date_measured) %>% 
-	unite(unique_id, temperature_c, replicate, remove = FALSE) %>% 
-	filter(stage %in% c("neonate", "clutch1")) %>% 
-	spread(key = stage, value = date_measured) %>% 
-	select(-x9) %>% 
-	filter(!is.na(actual_size_um)) %>% 
-	spread(key = stage, value = actual_size_um) %>% View
-
 ## try this again, need to split by lifestage
 
 neonate <- kd %>% 
@@ -121,20 +111,23 @@ all <- left_join(neonate, clutch1)
 all2 <- left_join(all, clutch2)
 all3 <- left_join(all2, clutch3)
 
-### size rate trade-off
+### size rate trade-off figure
 all3 %>% 
 	filter(clutch1_size > 0) %>% 
 	# filter(clutch2_size > 0) %>% 
-	# filter(clutch3_size > 0) %>% 
+	filter(clutch3_size > 0) %>% 
 	# filter(temperature_c < 27) %>% 
 	filter(clutch1_size > 1750) %>%
+	rename(temperature = temperature_c) %>% 
+	mutate(temperature = as.factor(temperature)) %>% 
 	mutate(time_to_1st_clutch = clutch1_date - neonate_date) %>%
 	mutate(time_to_1st_clutch = as.numeric(as.character(time_to_1st_clutch))) %>% 
 	mutate(somatic_growth_rate = ((clutch1_size - neonate_size)/time_to_1st_clutch)) %>% 
 	mutate(growth_rate_per_hour = somatic_growth_rate/24) %>% 
-	ggplot(aes(x = somatic_growth_rate, y = clutch1_size, color = factor(temperature_c))) + geom_point(size = 4, alpha = 0.5) +
+	mutate(growth_per_mass = growth_rate_per_hour/clutch1_size) %>% 
+	ggplot(aes(x = growth_per_mass, y = clutch3_size, color = temperature)) + geom_point(size = 4) +
 	geom_smooth(method = "lm", color = "#619CFF") +
-	xlab("somatic growth rate (um/hour)") + ylab("max length (um)") +
+	xlab("size-specific somatic growth rate (um/hour*um)") + ylab("clutch 3 length (um)") +
 	theme_minimal() 
 
 ### growth rate vs temperature
@@ -169,7 +162,7 @@ all3 %>%
 all3 %>% 
 	filter(clutch1_size > 0) %>% 
 	# filter(clutch2_size > 0) %>%
-	# filter(clutch3_size > 0) %>%
+	filter(clutch3_size > 0) %>%
 	# filter(temperature_c < 27) %>%
 	filter(clutch1_size > 1750) %>% 
 	mutate(time_to_1st_clutch1 = interval(neonate_date, clutch1_date)/ddays(1)) %>%
