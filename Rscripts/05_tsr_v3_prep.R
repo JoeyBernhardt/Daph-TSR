@@ -27,9 +27,10 @@ ggplot(aes(x = temperature_c, y = mean_length)) + geom_point()
 kd %>% 
 	filter(actual_size_um > 0) %>% 
 	filter(stage != "neonate") %>% 
-	filter(stage == "clutch1") %>% 
-	# filter(temperature_c > 10) %>% 
-	ggplot(aes(x = temperature_c, y = actual_size_um)) + geom_point() + geom_smooth(method = "lm")
+	filter(stage == "clutch3") %>% 
+	filter(temperature_c > 10) %>% 
+	ggplot(aes(x = temperature_c, y = actual_size_um)) + geom_point(size = 4, alpha = 0.5, color = "blue") + geom_smooth(method = "lm") +
+	theme_bw() + xlab("temperature (C)") + ylab("body length (um)")
 
 
 kd %>% 
@@ -50,6 +51,8 @@ kd %>%
 	filter(temperature_c > 10) %>% 
 	do(tidy(lm(actual_size_um ~ temperature_c, data = .), conf.int = TRUE)) %>% View
 
+## slope here is -23.00446 which corresponds to 
+## without the 10C, it's -28.52905, which corresponds to 1.19% change per C
 
 kd %>% 
 	filter(actual_size_um > 0) %>% 
@@ -156,13 +159,13 @@ all3 %>%
 	mutate(time_to_1st_clutch = as.numeric(as.character(time_to_1st_clutch))) %>% 
 	mutate(somatic_growth_rate = ((clutch1_size - neonate_size)/time_to_1st_clutch)) %>% 
 	mutate(growth_rate_per_hour = somatic_growth_rate/24) %>% 
-	ggplot(aes(x = temperature_c, y = time_to_1st_clutch, color = factor(temperature_c))) + geom_jitter(size = 4, alpha = 0.5, width = 0.2) +
+	ggplot(aes(x = temperature_c, y = log(time_to_1st_clutch))) + geom_jitter(size = 4, alpha = 0.5, width = 0.2, color = "#619CFF") +
 	geom_smooth(method = "lm", color = "#619CFF") +
 	xlab("temperature") + ylab("time to first clutch") +
-	theme_minimal() 
+	theme_minimal()
 
 
-
+### slope on the size rate trade-off
 all3 %>% 
 	filter(clutch1_size > 0) %>% 
 	# filter(clutch2_size > 0) %>%
@@ -179,7 +182,7 @@ all3 %>%
 	mutate(growth_per_mass = growth_rate_per_hour/clutch1_size) %>% 
 do(tidy(lm(log(clutch1_size) ~ log(growth_per_mass), data = .), conf.int = TRUE)) %>% View
 
-### slope we get here is -0.022219
+### slope we get here is -0.1301637
 
 
 #### Now bring in the clutch size data
@@ -205,9 +208,10 @@ kd2 <- kd %>%
 kb3 <- left_join(kd2, kb2, by = c("clutch_number", "unique_id"))
 
 
+### figure with clutch size vs body size
 kb3 %>% 
 	filter(actual_size_um > 0) %>% 
-	filter(clutch_number == "clutch1") %>% 
+	# filter(clutch_number == "clutch1") %>% 
 	# group_by(temperature_c.x) %>% 
-	ggplot(aes(x = actual_size_um, y = number_of_babies, color = factor(temperature_c.x))) + geom_point() +
-	geom_smooth(method = "lm") + facet_wrap( ~ temperature_c.x)
+	ggplot(aes(x = actual_size_um, y = number_of_babies)) + geom_point(size = 3) +
+	geom_smooth(method = "lm") + facet_wrap( ~ temperature_c.x) + theme_bw() + xlab("body length (um)") + ylab("clutch size")
