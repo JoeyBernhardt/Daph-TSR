@@ -208,3 +208,5 @@ kb3 %>%
 	# group_by(temperature_c.x) %>% 
 	ggplot(aes(x = actual_size_um, y = number_of_babies)) + geom_point(size = 3) +
 	geom_smooth(method = "lm") + facet_wrap( ~ temperature_c.x) + theme_bw() + xlab("body length (um)") + ylab("clutch size")
+
+
