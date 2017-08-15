@@ -160,8 +160,6 @@ fit_model <- nls(tl~vbT(age,Linf,K,t0),data=data_10_3,start=start_list)
 fit<-  coef(fit_model)
 
 
-
-str(fit)
 fitcurve <- function(x){
 	res<- fit[["Linf"]]*(1-exp(-fit[["K"]]*(x - fit[["t0"]])))
 	res
@@ -170,12 +168,6 @@ fitcurve <- function(x){
 
 vbcurve <-function(x){
 	res<- svTF$Linf*(1-exp(-svTF$K*(x - svTF$t0)))
-	res
-}
-
-
-vbcurve <-function(x){
-	res<- vb$Linf*(1-exp(-0.1*(x - -4)))
 	res
 }
 
