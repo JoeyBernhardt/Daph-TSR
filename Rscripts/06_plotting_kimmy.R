@@ -11,6 +11,7 @@ library(viridis)
 library(plotrix)
 library(tidyr)
 library(car)
+library(FSA)
 
 
 # read in data ------------------------------------------------------------
@@ -126,17 +127,58 @@ length_10 <- wide10 %>%
 
 data_10 <- left_join(age_10, length_10, by = c("temperature", "replicate", "clutch"))
 
+
+
+data_10_2 <- data_10 %>% 
+	rename(Length = length) %>% 
+	rename(Age = age) %>% 
+	filter(!is.na(Length), !is.na(Age)) 
+data_10_3 <- data_10 %>% 
+	rename(tl = length) %>% 
+		filter(!is.na(tl), !is.na(age)) %>% 
+	mutate(age = ifelse(age == 0, 1, age))
+
 data_10_2 %>% 
 	ggplot(aes(x = age, y = tl, color = factor(replicate))) + geom_point()
 
-data_10_2 <- data_10 %>% 
-	rename(tl = length) %>% 
-	filter(!is.na(tl), !is.na(age)) %>% 
-	mutate(age = ifelse(age == 0, 1, age))
-
-svTypical <- list(Linf=4500,K=0.5,t0=-1.8)
+svTypical <- list(Linf=2377,K=2.0896,t0=-0.185)
 vbTypical <- tl~Linf*(1-exp(-K*(age-t0)))
 
-fitTypical <- nls(vbTypical,data=data_10_2,start=svTypical)
+fitTypical <- nls(vbTypical,data=data_10_3,start=vb)
+
+vb <- vbStarts(tl~age,data=data_10_3,type="typical")
+vb
+
+vbT <- vbFuns("typical")
 
 
+svTF <- vbStarts(tl~age,data=data_10_3,type="typical")
+
+start_list <- c(Linf = 2377.364, t0 = -4, K = 0.1)
+fit_model <- nls(tl~vbT(age,Linf,K,t0),data=data_10_3,start=start_list)
+
+fit<-  coef(fit_model)
+
+
+
+str(fit)
+fitcurve <- function(x){
+	res<- fit[["Linf"]]*(1-exp(-fit[["K"]]*(x - fit[["t0"]])))
+	res
+}
+
+
+vbcurve <-function(x){
+	res<- svTF$Linf*(1-exp(-svTF$K*(x - svTF$t0)))
+	res
+}
+
+
+vbcurve <-function(x){
+	res<- vb$Linf*(1-exp(-0.1*(x - -4)))
+	res
+}
+
+p <- ggplot(data = data.frame(x = 0), mapping = aes(x = x)) 
+p + geom_point(aes(x = age, y = tl, color = factor(replicate)), data = data_10_3) +
+	stat_function(fun = fitcurve)
