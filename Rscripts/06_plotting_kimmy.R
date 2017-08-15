@@ -40,7 +40,7 @@ write_csv(model_results, "data-processed/model_results.csv")
 # now moving on to acclimated daphnia -------------------------------------
 
 
-acc <- read_csv("data-raw/acc_daph_body_size.csv")
+acc <- read_csv("data-raw/acc_daph_body_size_b.csv")
 
 acc2 <- clean_names(acc)
 
@@ -157,7 +157,7 @@ svTF <- vbStarts(tl~age,data=data_10_3,type="typical")
 start_list <- c(Linf = 2377.364, t0 = -4, K = 0.1)
 fit_model <- nls(tl~vbT(age,Linf,K,t0),data=data_10_3,start=start_list)
 
-fit<-  coef(fit_model)
+fit <-  coef(fit_model)
 
 
 fitcurve <- function(x){
