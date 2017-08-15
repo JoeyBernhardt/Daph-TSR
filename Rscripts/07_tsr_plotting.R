@@ -42,7 +42,7 @@ size3 <- size2 %>%
 	filter(!is.na(clutch1), !is.na(clutch2), !is.na(clutch3))
 
 
-date_10 <- acc3 %>% 
+date_10 <- size2 %>% 
 	filter(temperature == 10) %>% 
 	filter(!is.na(size_um)) %>% 
 	select(temperature, replicate, date_measured, stage) %>%
@@ -50,12 +50,11 @@ date_10 <- acc3 %>%
 	rename(neonate_date = neonate,
 				 clutch1_date = clutch1,
 				 clutch2_date = clutch2,
-				 clutch3_date = clutch3,
-				 clutch4_date = clutch4,
-				 clutch5_date = clutch5)
+				 clutch3_date = clutch3) %>% 
+	filter(!is.na(clutch1_date), !is.na(clutch2_date), !is.na(clutch3_date), !is.na(neonate_date))
 
 
-size_10 <- acc3 %>% 
+size_10 <- size2 %>% 
 	filter(temperature == 10) %>% 
 	filter(!is.na(size_um)) %>% 
 	select(temperature, replicate, size_um, stage) %>%
@@ -63,9 +62,8 @@ size_10 <- acc3 %>%
 	rename(neonate_size = neonate,
 				 clutch1_size = clutch1,
 				 clutch2_size = clutch2,
-				 clutch3_size = clutch3,
-				 clutch4_size = clutch4,
-				 clutch5_size = clutch5)
+				 clutch3_size = clutch3) %>% 
+	filter(!is.na(clutch1_size), !is.na(clutch2_size), !is.na(clutch3_size), !is.na(neonate_size))
 
 
 all_10 <- left_join(date_10, size_10, by = c("temperature", "replicate"))
@@ -75,21 +73,19 @@ wide10 <- all_10 %>%
 	mutate(clutch1_age = interval(neonate_date, clutch1_date)/ddays(1)) %>%
 	mutate(clutch2_age = interval(neonate_date, clutch2_date)/ddays(1)) %>%  
 	mutate(clutch3_age = interval(neonate_date, clutch3_date)/ddays(1)) %>%  
-	mutate(clutch4_age = interval(neonate_date, clutch4_date)/ddays(1)) %>%
-	mutate(clutch5_age = interval(neonate_date, clutch3_date)/ddays(1)) %>% 
 	select(-contains("date")) %>% 
-	mutate(neonate_age = 0)
+	mutate(neonate_age = 1)
 
 age_10 <- wide10 %>% 
-	select(temperature, replicate, contains("age")) %>%
-	gather(key = clutch, value = age, 3:8) %>%
+	select(temperature, replicate, contains("age")) %>% 
+	gather(key = clutch, value = age, 3:6) %>% 
 	separate(clutch, into = c("clutch", "word"), sep = "_") %>% 
 	select(-word)
 
 
 length_10 <- wide10 %>% 
 	select(temperature, replicate, contains("size")) %>% 
-	gather(key = clutch, value = length, 3:8) %>%
+	gather(key = clutch, value = length, 3:6) %>%
 	separate(clutch, into = c("clutch", "word"), sep = "_") %>% 
 	select(-word)
 
