@@ -97,6 +97,7 @@ length_10 <- wide10 %>%
 data_10 <- left_join(age_10, length_10, by = c("temperature", "replicate", "clutch"))
 
 
+
 # now fit vb --------------------------------------------------------------
 vbT <- vbFuns("typical")
 
@@ -548,10 +549,29 @@ all3 <- all2 %>%
 	mutate(growth_rate = K*24) %>% 
 	mutate(linf_mass =  0.00402*((Linf)^2.66))
 
+write_csv(all3, "data-processed/von_bert_mass.csv")
 all3 %>% 
-	ggplot(aes(x = log(K), y = log(linf_mass), color = factor(temperature))) + geom_point(size = 4) +
-	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("log(asymptotic body mass)") + xlab("log K") 
+	mutate(temperature = as.factor(temperature)) %>% 
+	ggplot(aes(x = log(K), y = log(linf_mass), color = temperature)) + geom_point(size = 4) +
+	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("log(asymptotic body mass)") + xlab("log (K)") +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica"))
 ggsave("figures/winter_trade_off.pdf")
+ggsave("figures/winter_trade_off.png")
+
+
+## K vs temperature
+all3 %>% 
+	ggplot(aes(x = temperature, y = K)) + geom_point() + geom_smooth(method = "lm")
+
+### K vs temperature
+all3 %>% 
+	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%
+	do(tidy(lm(K ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
 
 all3 %>% 
 	filter(Linf < 4000) %>% 
@@ -572,3 +592,33 @@ model_results <- size2 %>%
 	tidy
 
 write_csv(model_results, "data-processed/model_results.csv")
+
+
+
+# now onto somatic growth rate --------------------------------------------
+
+growth10 <- wide10 %>% 
+	mutate(somatic_growth_rate = (clutch1_size - neonate_size)/clutch1_age)
+
+growth16 <- wide16 %>% 
+	mutate(somatic_growth_rate = (clutch1_size - neonate_size)/clutch1_age)
+
+growth20 <- wide20 %>% 
+	mutate(somatic_growth_rate = (clutch1_size - neonate_size)/clutch1_age)
+
+growth24 <- wide24 %>% 
+	mutate(somatic_growth_rate = (clutch1_size - neonate_size)/clutch1_age)
+
+growth27 <- wide27 %>% 
+	mutate(somatic_growth_rate = (clutch1_size - neonate_size)/clutch1_age)
+
+all_growth <- bind_rows(growth27, growth24, growth20, growth16, growth10)
+
+
+all_growth %>% 
+	ggplot(aes(x = temperature, y = log(somatic_growth_rate))) + geom_point() +
+	geom_smooth(method = "lm")
+
+all_growth %>% 
+	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%
+	do(tidy(lm(log(somatic_growth_rate) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
