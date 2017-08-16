@@ -549,8 +549,9 @@ all3 <- all2 %>%
 	mutate(linf_mass =  0.00402*((Linf)^2.66))
 
 all3 %>% 
-	ggplot(aes(x = log(K), y = log(linf_mass), color = factor(temperature))) + geom_point(size = 2 ) +
+	ggplot(aes(x = log(K), y = log(linf_mass), color = factor(temperature))) + geom_point(size = 4) +
 	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("log(asymptotic body mass)") + xlab("log K") 
+ggsave("figures/winter_trade_off.pdf")
 
 all3 %>% 
 	filter(Linf < 4000) %>% 
