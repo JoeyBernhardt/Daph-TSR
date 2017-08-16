@@ -28,9 +28,17 @@ size2 <- clean_names(size) %>%
 
 size2 %>% 
 	filter(actual_size_um > 0) %>% 
-	filter(stage == "clutch3") %>% 
+	filter(stage != "neonate") %>% 
 	ggplot(aes(x = temperature, y = actual_size_um)) + geom_point() +
-	geom_smooth(method = "lm") + theme_bw() + ylab("Body length") + xlab("Temperature")
+	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("Body length") + xlab("Temperature") +
+	facet_wrap( ~ stage) +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica"))
+ggsave("figures/size_over_clutches.pdf")
+ggsave("figures/size_over_clutches.png")
 
 max_size <- size2 %>% 
 	filter(actual_size_um > 0) %>% 
@@ -547,7 +555,7 @@ all2 %>%
 all3 <- all2 %>% 
 	ungroup() %>% 
 	mutate(growth_rate = K*24) %>% 
-	mutate(linf_mass =  0.00402*((Linf)^2.66))
+	mutate(linf_mass =  0.00402*((Linf/1000)^2.66))
 
 write_csv(all3, "data-processed/von_bert_mass.csv")
 all3 %>% 
@@ -578,6 +586,17 @@ all3 %>%
 	ggplot(aes(x = temperature, y = linf_mass, color = factor(replicate))) + geom_point() +
 	geom_smooth(method = "lm", color = "black")
 
+
+all3 %>% 
+	filter(Linf < 4000) %>% 
+	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%
+	do(tidy(lm(linf_mass ~ temperature, data = .), conf.int = TRUE)) %>% View
+
+
+all3 %>% 
+	filter(Linf < 4000) %>% 
+	lm(linf_mass ~ temperature, data = .) %>% 
+	summary()
 
 rma <- lmodel2(log(linf_mass) ~ log(K), data = all3, range.y = "interval", range.x = "interval")
 rma$regression.results
