@@ -12,6 +12,7 @@ library(tidyr)
 library(car)
 library(FSA)
 library(lmodel2)
+library(viridis)
 
 
 
@@ -143,6 +144,9 @@ w_babies <- winter_tsr_babies %>%
 	mutate(stage = ifelse(clutch_number == 2, "clutch2", stage)) %>% 
 	mutate(stage = ifelse(clutch_number == 3, "clutch3", stage))
 
+w_babies %>% 
+	filter(temperature == 27 & replicate == 4) %>% View
+
 size <- read_csv("data-raw/daph_tsr_body_size.csv")
 
 size2 <- clean_names(size) %>% 
@@ -168,3 +172,52 @@ w_babies_size %>%
 	geom_smooth(method = "lm", color = "black") 
 ggsave("figures/clutch_size_mass.pdf")
 ggsave("figures/clutch_size_mass.png")
+
+mass <- read_csv("data-processed/von_bert_mass.csv")
+all_growth <- read_csv("data-processed/all_growth.csv")
+
+
+all4 <- left_join(w_babies_size, all_growth)
+
+
+babies_sum <- w_babies_size %>% 
+	group_by(temperature, replicate) %>% 
+	summarise_each(funs(mean, sum, max), number_of_babies, size_um)
+
+all5 <- left_join(all4, babies_sum)
+
+all5 %>% 
+	mutate(mass =  0.00402*((size_um_max/1000)^2.66)) %>% 
+	unite(unique, temperature, replicate, remove = FALSE) %>% 
+	filter(unique != "27_4") %>% 
+	mutate(babies_per_time = number_of_babies_sum/clutch3_age) %>% 
+	mutate(Temperature = as.factor(temperature)) %>% 
+	ggplot(aes(x = mass, y = babies_per_time, group = Temperature, color = Temperature)) + geom_point(size = 2) +
+	# facet_wrap( ~ temperature, scales = "free") +
+	geom_smooth(method = "lm") +ylim(0, 4) + xlim(0.025, 0.125) +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) + geom_smooth(method = "lm", aes(fill = Temperature)) +
+	xlab("Body size (mg DW)") + ylab("Number of offspring produced/day") + scale_color_viridis(discrete = TRUE) +
+	scale_fill_viridis(discrete = TRUE) 
+ggsave("figures/offspring_per_day.pdf")
+ggsave("figures/offspring_per_day.png")
+
+all5 %>% 
+	mutate(mass =  0.00402*((size_um_max/1000)^2.66)) %>% 
+	unite(unique, temperature, replicate, remove = FALSE) %>% 
+	filter(unique != "27_4") %>% 
+	mutate(babies_per_time = number_of_babies_sum/clutch3_age) %>% 
+	group_by(temperature) %>% 
+	do(tidy(lm(babies_per_time ~ mass, data = .), conf.int = TRUE)) %>%
+	filter(term != "(Intercept)") %>% 
+	ggplot(aes(x = temperature, y = estimate)) + geom_point() +
+	geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.1) +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) + geom_hline(yintercept = 0) + xlab("Temperature (°C)") +
+	ylab("Slope of reproductive output vs. body size")

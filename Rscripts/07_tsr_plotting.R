@@ -29,14 +29,19 @@ size2 <- clean_names(size) %>%
 size2 %>% 
 	filter(actual_size_um > 0) %>% 
 	filter(stage != "neonate") %>% 
-	ggplot(aes(x = temperature, y = actual_size_um)) + geom_point() +
-	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("Body length") + xlab("Temperature") +
+	mutate(mass =  0.00402*((actual_size_um/1000)^2.66)) %>% 
+	mutate(stage = ifelse(stage == "clutch1", "Age at clutch 1", stage)) %>% 
+	mutate(stage = ifelse(stage == "clutch2", "Age at clutch 2", stage)) %>% 
+	mutate(stage = ifelse(stage == "clutch3", "Age at clutch 3", stage)) %>% 
+	ggplot(aes(x = temperature, y = mass)) + geom_point() +
+	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("Body size (mg DW)") + xlab("Temperature (°C)") +
 	facet_wrap( ~ stage) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
-	theme(text = element_text(size=16, family = "Helvetica"))
+	theme(text = element_text(size=16, family = "Helvetica")) +
+	theme(strip.background = element_rect(colour="white", fill="white"))
 ggsave("figures/size_over_clutches.pdf")
 ggsave("figures/size_over_clutches.png")
 
@@ -559,14 +564,14 @@ all3 <- all2 %>%
 
 write_csv(all3, "data-processed/von_bert_mass.csv")
 all3 %>% 
-	mutate(temperature = as.factor(temperature)) %>% 
-	ggplot(aes(x = log(K), y = log(linf_mass), color = temperature)) + geom_point(size = 4) +
-	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("log(asymptotic body mass)") + xlab("log (K)") +
+	mutate(Temperature = as.factor(temperature)) %>% 
+	ggplot(aes(x = log(K), y = log(linf_mass), color = Temperature)) + geom_point(size = 4) +
+	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("log(asymptotic body mass)") + xlab("log growth constant (K)") +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
-	theme(text = element_text(size=16, family = "Helvetica"))
+	theme(text = element_text(size=16, family = "Helvetica")) + scale_color_viridis(discrete = TRUE)
 ggsave("figures/winter_trade_off.pdf")
 ggsave("figures/winter_trade_off.png")
 
@@ -633,6 +638,7 @@ growth27 <- wide27 %>%
 
 all_growth <- bind_rows(growth27, growth24, growth20, growth16, growth10)
 
+write_csv(all_growth, "data-processed/all_growth.csv")
 
 all_growth %>% 
 	ggplot(aes(x = temperature, y = log(somatic_growth_rate))) + geom_point() +
