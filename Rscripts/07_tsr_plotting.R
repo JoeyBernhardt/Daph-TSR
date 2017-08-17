@@ -563,15 +563,24 @@ all3 <- all2 %>%
 	mutate(linf_mass =  0.00402*((Linf/1000)^2.66))
 
 write_csv(all3, "data-processed/von_bert_mass.csv")
+
+
+prediction <- function(x) -0.69*x -4.5
+
 all3 %>% 
 	mutate(Temperature = as.factor(temperature)) %>% 
-	ggplot(aes(x = log(K), y = log(linf_mass), color = Temperature)) + geom_point(size = 4) +
+	ggplot(aes(x = log(K), y = log(linf_mass), color = Temperature)) + 
+	geom_point(size = 4) +
 	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("log(asymptotic body mass)") + xlab("log growth constant (K)") +
+	geom_abline(slope = -0.69, intercept = 0, color = "red") +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
-	theme(text = element_text(size=16, family = "Helvetica")) + scale_color_viridis(discrete = TRUE)
+	theme(text = element_text(size=16, family = "Helvetica")) + scale_color_viridis(discrete = TRUE) +
+	# stat_function( fun = prediction, color = "grey", linetype = "dashed") +
+	annotate("text", label = "Slope = -0.59, CIs (-0.76, -0.46)", x = -2.2, y = -3.9, size = 6)
+	
 ggsave("figures/winter_trade_off.pdf")
 ggsave("figures/winter_trade_off.png")
 
@@ -600,7 +609,7 @@ all3 %>%
 
 all3 %>% 
 	filter(Linf < 4000) %>% 
-	lm(linf_mass ~ temperature, data = .) %>% 
+	lm(log(linf_mass) ~ log(K), data = .) %>% 
 	summary()
 
 rma <- lmodel2(log(linf_mass) ~ log(K), data = all3, range.y = "interval", range.x = "interval")
@@ -641,8 +650,17 @@ all_growth <- bind_rows(growth27, growth24, growth20, growth16, growth10)
 write_csv(all_growth, "data-processed/all_growth.csv")
 
 all_growth %>% 
-	ggplot(aes(x = temperature, y = log(somatic_growth_rate))) + geom_point() +
-	geom_smooth(method = "lm")
+	mutate(growth_mass =  0.00402*((somatic_growth_rate/1000)^2.66)) %>% 
+	ggplot(aes(x = temperature, y = log(growth_mass))) + geom_point(size = 2) +
+	geom_smooth(method = "lm", color = "black") + 
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) +  xlab("Temperature (°C)") +
+	ylab("Somatic growth rate (mg DW/day)")
+ggsave("figures/somatic_growth_per_day_v_temperature.pdf")
+ggsave("figures/somatic_growth_per_day_v_temperature.png")
 
 all_growth %>% 
 	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%

@@ -186,13 +186,16 @@ babies_sum <- w_babies_size %>%
 
 all5 <- left_join(all4, babies_sum)
 
-all5 %>% 
+all6 <- all5 %>% 
 	mutate(mass =  0.00402*((size_um_max/1000)^2.66)) %>% 
 	unite(unique, temperature, replicate, remove = FALSE) %>% 
 	filter(unique != "27_4") %>% 
 	mutate(babies_per_time = number_of_babies_sum/clutch3_age) %>% 
 	mutate(Temperature = as.factor(temperature)) %>% 
-	ggplot(aes(x = mass, y = babies_per_time, group = Temperature, color = Temperature)) + geom_point(size = 2) +
+	ungroup()
+
+all6 %>% 
+	ggplot(aes(x = mass, y = babies_per_time, group = Temperature, color = Temperature)) + geom_point(size = 3) +
 	# facet_wrap( ~ temperature, scales = "free") +
 	geom_smooth(method = "lm") +ylim(0, 4) + xlim(0.025, 0.125) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -201,7 +204,8 @@ all5 %>%
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) + geom_smooth(method = "lm", aes(fill = Temperature)) +
 	xlab("Body size (mg DW)") + ylab("Number of offspring produced/day") + scale_color_viridis(discrete = TRUE) +
-	scale_fill_viridis(discrete = TRUE) 
+	scale_fill_viridis(discrete = TRUE) +
+	geom_abline(slope = -31.640328, intercept = 2.979307, color = "grey", linetype = "dashed", size = 1) 
 ggsave("figures/offspring_per_day.pdf")
 ggsave("figures/offspring_per_day.png")
 
@@ -221,3 +225,13 @@ all5 %>%
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) + geom_hline(yintercept = 0) + xlab("Temperature (°C)") +
 	ylab("Slope of reproductive output vs. body size")
+ggsave("figures/slope_of_rep_output_vs_size.pdf")
+ggsave("figures/slope_of_rep_output_vs_size.png")
+
+
+all5 %>% 
+	mutate(mass =  0.00402*((size_um_max/1000)^2.66)) %>% 
+	unite(unique, temperature, replicate, remove = FALSE) %>% 
+	filter(unique != "27_4") %>% 
+	mutate(babies_per_time = number_of_babies_sum/clutch3_age) %>% 
+	do(tidy(lm(babies_per_time ~ mass, data = .), conf.int = TRUE)) %>% View
