@@ -158,7 +158,7 @@ size2 <- clean_names(size) %>%
 
 w_babies_size <- left_join(w_babies, size2, by = c("temperature", "replicate", "stage"))
 
-
+## Clutch size vs. body size
 w_babies_size %>% 
 	# filter(stage == "clutch3") %>% 
 	mutate(mass =  0.00402*((size_um/1000)^2.66)) %>% 
@@ -178,6 +178,59 @@ all_growth <- read_csv("data-processed/all_growth.csv")
 
 
 all4 <- left_join(w_babies_size, all_growth)
+
+
+
+
+# Generation time ---------------------------------------------------------
+
+## graph of generation time
+all_growth %>% 
+	filter(clutch1_age < 60) %>% 
+	ggplot(aes(x = temperature, y = clutch1_age)) + geom_jitter(height = 0.7, width = 0, size = 4, alpha = 0.5) +
+	geom_smooth(color = "black") +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) + ylab("Generation time") + xlab("Temperature (°C)")
+
+lifespan <- read_csv("data-raw/lifespan_clutches.csv", n_max = 40)
+
+str(lifespan)
+
+generation_time_lifespan <- lifespan %>% 
+	mutate(birth_date = mdy(birth_date)) %>% 
+	mutate(clutch1_bd = mdy(clutch1_bd)) %>% 
+	mutate(generation_time = interval(birth_date, clutch1_bd)/ddays(1)) %>% 
+	select(temperature, generation_time, replicate) %>% 
+	mutate(experiment = "lifepsan")
+
+
+
+
+
+generation_time_tsr <- all_growth %>% 
+	filter(clutch1_age < 60) %>% 
+	select(temperature, clutch1_age) %>% 
+	rename(generation_time = clutch1_age) %>% 
+	mutate(experiment = "tsr")
+
+all_generation_times <- bind_rows(generation_time_lifespan, generation_time_tsr)
+
+all_generation_times %>%
+	# filter(experiment == "tsr") %>% 
+	ggplot(aes(x = temperature, y = generation_time)) + 
+	# geom_point(size = 2) + 
+	geom_jitter(height = 0.7, width = 0, size = 2, alpha = 0.7) +
+	geom_smooth(color = "black") +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) + ylab("Generation time (days)") + xlab("Temperature (°C)")
+ggsave("figures/all_generation_times.pdf")
+ggsave("figures/all_generation_times.png")
 
 
 babies_sum <- w_babies_size %>% 
