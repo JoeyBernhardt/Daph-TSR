@@ -193,7 +193,7 @@ all_growth %>%
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
-	theme(text = element_text(size=16, family = "Helvetica")) + ylab("Generation time") + xlab("Temperature (°C)")
+	theme(text = element_text(size=16, family = "Helvetica")) + ylab("Generation time (days") + xlab("Temperature (°C)")
 
 lifespan <- read_csv("data-raw/lifespan_clutches.csv", n_max = 40)
 
@@ -218,7 +218,7 @@ generation_time_tsr <- all_growth %>%
 
 all_generation_times <- bind_rows(generation_time_lifespan, generation_time_tsr)
 
-all_generation_times %>%
+generation_times_plot <- all_generation_times %>%
 	# filter(experiment == "tsr") %>% 
 	ggplot(aes(x = temperature, y = generation_time)) + 
 	# geom_point(size = 2) + 

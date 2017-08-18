@@ -42,8 +42,17 @@ size2 %>%
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) +
 	theme(strip.background = element_rect(colour="white", fill="white"))
-ggsave("figures/size_over_clutches.pdf")
-ggsave("figures/size_over_clutches.png")
+# ggsave("figures/size_over_clutches.pdf")
+# ggsave("figures/size_over_clutches.png")
+
+## what are the slopes on the size vs. temp relationships?
+size2 %>% 
+	filter(actual_size_um > 0) %>% 
+	filter(stage != "neonate") %>% 
+	mutate(mass =  0.00402*((actual_size_um/1000)^2.66)) %>% 
+	group_by(stage) %>% 
+	do(tidy(lm(mass ~ temperature, data =.), conf.int = TRUE)) %>% View
+
 
 max_size <- size2 %>% 
 	filter(actual_size_um > 0) %>% 
@@ -220,6 +229,7 @@ svTF <- vbStarts(tl~age,data=data_27_2,type="typical")
 
 start_list <- c(Linf = 2377.364, t0 = -4, K = 0.1)
 fit_model <- nls(tl~vbT(age,Linf,K,t0),data=data_27_2,start=start_list)
+summary(fit_model)
 
 fit <-  coef(fit_model)
 
@@ -562,16 +572,16 @@ all3 <- all2 %>%
 	mutate(growth_rate = K*24) %>% 
 	mutate(linf_mass =  0.00402*((Linf/1000)^2.66))
 
-write_csv(all3, "data-processed/von_bert_mass.csv")
+# write_csv(all3, "data-processed/von_bert_mass.csv")
 
 
 prediction <- function(x) -0.69*x -4.5
 
 all3 %>% 
-	mutate(Temperature = as.factor(temperature)) %>% 
-	ggplot(aes(x = log(K), y = log(linf_mass), color = Temperature)) + 
+	mutate(`Temperature (°C)` = as.factor(temperature)) %>% 
+	ggplot(aes(x = log(K), y = log(linf_mass), color = `Temperature (°C)`)) + 
 	geom_point(size = 4) +
-	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("log(asymptotic body mass)") + xlab("log growth constant (K)") +
+	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("log(asymptotic body mass, mg DW)") + xlab("log(growth constant k, per day)") +
 	geom_abline(slope = -0.69, intercept = 0, color = "red") +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
@@ -579,10 +589,10 @@ all3 %>%
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) + scale_color_viridis(discrete = TRUE) +
 	# stat_function( fun = prediction, color = "grey", linetype = "dashed") +
-	annotate("text", label = "Slope = -0.59, CIs (-0.76, -0.46)", x = -2.2, y = -3.9, size = 6)
+	annotate("text", label = "Predicted slope = -0.69; CIs (-0.99, -0.53)\n Observed slope = -0.59; CIs (-0.76, -0.46)", x = -2.5, y = -3.5, size = 5)
 	
-ggsave("figures/winter_trade_off.pdf")
-ggsave("figures/winter_trade_off.png")
+ggsave("figures/winter_trade_off.pdf", width = 8, height = 5)
+ggsave("figures/winter_trade_off.png", width = 8, height = 5)
 
 
 ## K vs temperature
@@ -624,7 +634,7 @@ model_results <- size2 %>%
 	lm(actual_size_um ~ temperature, data = .) %>% 
 	tidy
 
-write_csv(model_results, "data-processed/model_results.csv")
+# write_csv(model_results, "data-processed/model_results.csv")
 
 
 
@@ -647,20 +657,27 @@ growth27 <- wide27 %>%
 
 all_growth <- bind_rows(growth27, growth24, growth20, growth16, growth10)
 
-write_csv(all_growth, "data-processed/all_growth.csv")
+# write_csv(all_growth, "data-processed/all_growth.csv")
 
-all_growth %>% 
+somatic_growth_plot <- all_growth %>% 
 	mutate(growth_mass =  0.00402*((somatic_growth_rate/1000)^2.66)) %>% 
-	ggplot(aes(x = temperature, y = log(growth_mass))) + geom_point(size = 2) +
+	ggplot(aes(x = temperature, y = growth_mass)) + geom_point(size = 2) +
 	geom_smooth(method = "lm", color = "black") + 
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) +  xlab("Temperature (°C)") +
-	ylab("Somatic growth rate (mg DW/day)")
-ggsave("figures/somatic_growth_per_day_v_temperature.pdf")
-ggsave("figures/somatic_growth_per_day_v_temperature.png")
+	ylab("Growth rate (mg DW/day)")
+# ggsave("figures/somatic_growth_per_day_v_temperature.pdf")
+# ggsave("figures/somatic_growth_per_day_v_temperature.png")
+
+## growth rate and generation time plot (generation times plot comes from 08_reproductive output.R, approx line 221)
+
+library(cowplot)
+p <- plot_grid(somatic_growth_plot, generation_times_plot, labels = c("A", "B"), align = "v", nrow = 2, ncol  =1)
+save_plot("figures/growth_gen_time_panel.png", p, base_height = 7, base_width = 5)
+save_plot("figures/growth_gen_time_panel.pdf", p, base_height = 7, base_width = 5)
 
 all_growth %>% 
 	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%
