@@ -30,9 +30,9 @@ size2 %>%
 	filter(actual_size_um > 0) %>% 
 	filter(stage != "neonate") %>% 
 	mutate(mass =  0.00402*((actual_size_um/1000)^2.66)) %>% 
-	mutate(stage = ifelse(stage == "clutch1", "Age at clutch 1", stage)) %>% 
-	mutate(stage = ifelse(stage == "clutch2", "Age at clutch 2", stage)) %>% 
-	mutate(stage = ifelse(stage == "clutch3", "Age at clutch 3", stage)) %>% 
+	mutate(stage = ifelse(stage == "clutch1", "Size at clutch 1", stage)) %>% 
+	mutate(stage = ifelse(stage == "clutch2", "Size at clutch 2", stage)) %>% 
+	mutate(stage = ifelse(stage == "clutch3", "Size at clutch 3", stage)) %>% 
 	ggplot(aes(x = temperature, y = mass)) + geom_point() +
 	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("Body size (mg DW)") + xlab("Temperature (°C)") +
 	facet_wrap( ~ stage) +
@@ -42,8 +42,8 @@ size2 %>%
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) +
 	theme(strip.background = element_rect(colour="white", fill="white"))
-# ggsave("figures/size_over_clutches.pdf")
-# ggsave("figures/size_over_clutches.png")
+ggsave("figures/size_over_clutches.pdf")
+ggsave("figures/size_over_clutches.png")
 
 ## what are the slopes on the size vs. temp relationships?
 size2 %>% 
@@ -575,11 +575,14 @@ all3 <- all2 %>%
 # write_csv(all3, "data-processed/von_bert_mass.csv")
 
 
-prediction <- function(x) -0.69*x -4.5
 
+all3 <- read_csv("data-processed/von_bert_mass.csv")
+
+prediction <- function(x) -0.69*x -4.3
 all3 %>% 
 	mutate(`Temperature (°C)` = as.factor(temperature)) %>% 
 	ggplot(aes(x = log(K), y = log(linf_mass), color = `Temperature (°C)`)) + 
+	stat_function( fun = prediction, color = "black", linetype = "dashed") +
 	geom_point(size = 4) +
 	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("log(asymptotic body mass, mg DW)") + xlab("log(growth constant k, per day)") +
 	geom_abline(slope = -0.69, intercept = 0, color = "red") +
@@ -588,7 +591,7 @@ all3 %>%
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) + scale_color_viridis(discrete = TRUE) +
-	# stat_function( fun = prediction, color = "grey", linetype = "dashed") +
+	# stat_function( fun = prediction, color = "black", linetype = "dashed") +
 	annotate("text", label = "Predicted slope = -0.69; CIs (-0.99, -0.53)\n Observed slope = -0.59; CIs (-0.76, -0.46)", x = -2.5, y = -3.5, size = 5)
 	
 ggsave("figures/winter_trade_off.pdf", width = 8, height = 5)
