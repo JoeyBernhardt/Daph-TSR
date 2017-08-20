@@ -285,7 +285,7 @@ all6 <- all5 %>%
 	mutate(mass =  0.00402*((size_um_max/1000)^2.66)) %>% 
 	unite(unique, temperature, replicate, remove = FALSE) %>% 
 	filter(unique != "27_4") %>% 
-	mutate(babies_per_time = number_of_babies_average_sum/clutch3_age) %>% 
+	mutate(babies_per_time = log(number_of_babies_sum)/clutch3_age) %>% 
 	mutate(Temperature = as.factor(temperature)) %>% 
 	ungroup()
 
@@ -307,11 +307,45 @@ all6 %>%
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) + geom_smooth(method = "lm", aes(fill = `Temperature (°C)`)) +
-	xlab("Body size (mg DW)") + ylab("Number of offspring produced/day") + scale_color_viridis(discrete = TRUE) +
+	xlab("Body size (mg DW)") + ylab("Intrinsic rate of increase (r)") + scale_color_viridis(discrete = TRUE) +
 	scale_fill_viridis(discrete = TRUE) 
 	# + geom_abline(slope = -31.640328, intercept = 2.979307, color = "grey", linetype = "dashed", size = 1) 
-ggsave("figures/offspring_per_day.pdf")
-ggsave("figures/offspring_per_day.png")
+ggsave("figures/offspring_per_day.pdf", width = 8, height = 5)
+ggsave("figures/offspring_per_day.png", width = 8, height = 5)
+
+
+all6 %>% 
+	rename(`Temperature (°C)` = Temperature) %>% 
+	ggplot(aes(x = mass, y = number_of_babies_average_mean, group = `Temperature (°C)`, color = `Temperature (°C)`)) + geom_point(size = 3) +
+	# facet_wrap( ~ temperature, scales = "free") +
+	geom_smooth(method = "lm") +
+	# ylim(0, 1.3) +
+	xlim(0.025, 0.125) +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) + geom_smooth(method = "lm", aes(fill = `Temperature (°C)`)) +
+	xlab("Body size (mg DW)") + ylab("Clutch size") + scale_color_viridis(discrete = TRUE) +
+	scale_fill_viridis(discrete = TRUE) 
+
+all6 %>% 
+	ggplot(aes(x = actual_size_um, y = number_of_babies, color = factor(temperature))) + geom_point() +
+	facet_wrap( ~ temperature) + geom_smooth(method = "lm")
+
+all6 %>% 
+	group_by(temperature) %>% 
+	do(tidy(lm(number_of_babies_average_mean ~ mass, data = .), conf.int = TRUE)) %>%
+	filter(term != "(Intercept)") %>% 
+	ggplot(aes(x = temperature, y = estimate)) + geom_point() +
+	geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.1) +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) + geom_hline(yintercept = 0) + xlab("Temperature (°C)") +
+	ylab("Slope of reproductive output vs. body size")
+
 
 all6 %>% 
 	group_by(temperature) %>% 
@@ -329,7 +363,7 @@ ggsave("figures/slope_of_rep_output_vs_size.pdf")
 ggsave("figures/slope_of_rep_output_vs_size.png")
 
 
-all5 %>% 
+all6 %>% 
 	mutate(mass =  0.00402*((size_um_max/1000)^2.66)) %>% 
 	unite(unique, temperature, replicate, remove = FALSE) %>% 
 	filter(unique != "27_4") %>% 
