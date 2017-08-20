@@ -598,6 +598,11 @@ ggsave("figures/winter_trade_off.pdf", width = 8, height = 5)
 ggsave("figures/winter_trade_off.png", width = 8, height = 5)
 
 
+## now let's try to maatch up growth rate with metabolic rate
+
+
+
+
 ## K vs temperature
 all3 %>% 
 	ggplot(aes(x = temperature, y = K)) + geom_point() + geom_smooth(method = "lm")
@@ -605,14 +610,54 @@ all3 %>%
 ### K vs temperature
 all3 %>% 
 	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%
-	do(tidy(lm(K ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+	do(tidy(lm(log(K) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
+resp.mass <- read_csv("data-raw/resp.mass.csv")
 
-all3 %>% 
-	filter(Linf < 4000) %>% 
-	ggplot(aes(x = temperature, y = linf_mass, color = factor(replicate))) + geom_point() +
-	geom_smooth(method = "lm", color = "black")
+resp <- resp.mass %>% 
+	rename(rate = mean) %>% 
+	mutate(measurement = "Mass-normalized metablic rate")
 
+Ks <- all3 %>% 
+	select(temperature, K, replicate) %>% 
+	mutate(measurement = "Growth constant (k)") %>% 
+	mutate(rate = K)
+
+responses <- bind_rows(resp, Ks) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) 
+
+responses %>% 
+	group_by(measurement) %>% 
+	do(tidy(lm(log(rate) ~ inverse_temp, data =.), conf.int = TRUE)) %>% 
+	filter(term != "(Intercept)") %>% 
+	ggplot(aes(x = measurement, y = estimate)) + geom_point(size = 3) +
+geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.1) +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) +
+	theme(strip.background = element_rect(colour="white", fill="white")) +
+	ylab("Activation energy (eV)") + xlab("")
+ggsave("figures/activation_energies.png", width = 6, height = 3)
+ggsave("figures/activation_energies.pdf", width = 6, height = 3)	
+
+### figure of growth constant and metabolic rate!
+
+responses %>% 
+	ggplot(aes(x = temperature, y = log(rate))) + geom_point() +
+	facet_wrap( ~ measurement, scales = "free") + 
+	# scale_x_reverse() +
+	geom_smooth(method = "lm", color = "black")+
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) +
+	theme(strip.background = element_rect(colour="white", fill="white")) + xlab("Temperature (°C)") +
+	ylab("Demand\n log(rate)")
+ggsave("figures/metabolic_rate_growth_rate.png", width = 6.5, height = 3)
+ggsave("figures/metabolic_rate_growth_rate.pdf", width = 6.5, height = 3)
 
 all3 %>% 
 	filter(Linf < 4000) %>% 
@@ -625,6 +670,7 @@ all3 %>%
 	lm(log(linf_mass) ~ log(K), data = .) %>% 
 	summary()
 
+### what's the slope of the size-rate tradeoff?
 rma <- lmodel2(log(linf_mass) ~ log(K), data = all3, range.y = "interval", range.x = "interval")
 rma$regression.results
 rma$confidence.intervals
@@ -639,6 +685,19 @@ model_results <- size2 %>%
 
 # write_csv(model_results, "data-processed/model_results.csv")
 
+
+
+met_rate <- all3 %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	mutate(metabolic_rate = linf_mass*exp(0.88/(.00008617*inverse_temp))) 
+
+met_rate %>%
+	ggplot(aes(y = log(linf_mass), x = log(metabolic_rate), color = temperature)) + geom_point() + geom_smooth(method = "lm")
+
+rma2 <- lmodel2(log(linf_mass) ~ log(metabolic_rate), data = met_rate, range.y = "interval", range.x = "interval")
+rma2$regression.results
+rma2$confidence.intervals
+rma2$rsquare
 
 
 # now onto somatic growth rate --------------------------------------------
