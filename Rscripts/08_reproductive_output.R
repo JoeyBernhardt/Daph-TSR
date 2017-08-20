@@ -117,7 +117,11 @@ acc27 <- acc2 %>%
 	top_n(n =1, wt = size_um)
 	
 babies3_27 <- babies3 %>% 
-	filter(temperature == 27) 
+	filter(temperature == 27) %>% 
+	mutate(stage = clutch_number) %>% 
+	mutate(stage = ifelse(stage == 1, "clutch1", stage)) %>%
+	mutate(stage = ifelse(stage == 2, "clutch2", stage)) %>% 
+	mutate(stage = ifelse(stage == 3, "clutch3", stage)) 
 
 
 all27_acc <- left_join(acc27, babies3_27, by = "replicate")
@@ -132,6 +136,43 @@ all27_acc %>%
 	do(tidy(lm(final_baby_count ~ size_um, data = .), conf.int = TRUE)) %>% View
 
 
+### ok let's pull out the data up to clutch 3, then join with the winter babies
+
+acc27_c3 <- acc2 %>% 
+	mutate(date_measured = mdy(date_measured)) %>% 
+	filter(temperature == 27) %>% 
+	filter(stage %in% c("clutch1", "clutch2", "clutch3"))
+
+all27_3 <- left_join(acc27_c3, babies3_27, by = c("replicate", "stage")) %>% 
+	filter(!is.na(final_baby_count)) 
+
+babies_27sum <- all27_3 %>% 
+	mutate(size_um = ifelse(replicate == 4 & stage == "clutch3", 1935.807, size_um)) %>%
+	mutate(size_um = ifelse(replicate == 5 & stage == "clutch1", 2059.762, size_um)) %>%
+	mutate(size_um = ifelse(replicate == 7 & stage == "clutch3", 1747.451, size_um)) %>% 
+	mutate(size_um = as.numeric(size_um)) %>% 
+	group_by(replicate) %>% 
+	summarise_each(funs(mean, sum, max), final_baby_count, size_um) 
+
+
+### get the days to clutch 3
+
+
+days_to_clutch3 <- acc27 %>% 
+	filter(stage %in% c("neonate", "clutch3")) %>%
+	filter(!is.na(date_measured)) %>% 
+	select(stage, date_measured, replicate) %>% 
+	spread(key = stage, value = date_measured) %>%
+	mutate(clutch3_age = interval(neonate, clutch3)/ddays(1)) 
+
+summer_27 <- left_join(days_to_clutch3, babies_27sum) %>% 
+	mutate(temperature = "27") %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	mutate(mass =  0.00402*((size_um_max/1000)^2.66)) %>% 
+	unite(unique, temperature, replicate, remove = FALSE) %>% 
+	mutate(babies_per_time = final_baby_count_sum/clutch3_age) %>%
+	mutate(Temperature = as.factor(temperature)) %>% 
+	ungroup()
 
 # now to winter TSR babies ------------------------------------------------
 
@@ -247,6 +288,11 @@ all6 <- all5 %>%
 	mutate(babies_per_time = number_of_babies_average_sum/clutch3_age) %>% 
 	mutate(Temperature = as.factor(temperature)) %>% 
 	ungroup()
+
+
+
+
+# all6b <- bind_rows(all6, summer_27)
 
 
 all6 %>% 
