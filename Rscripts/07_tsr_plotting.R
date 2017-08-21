@@ -629,7 +629,7 @@ responses <- bind_rows(resp, Ks) %>%
 responses %>% 
 	group_by(measurement) %>% 
 	do(tidy(lm(log(rate) ~ inverse_temp, data =.), conf.int = TRUE)) %>% 
-	filter(term != "(Intercept)") %>% 
+	filter(term != "(Intercept)") %>% View
 	ggplot(aes(x = measurement, y = estimate)) + geom_point(size = 3) +
 geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.1) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
