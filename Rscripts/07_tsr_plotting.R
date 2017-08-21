@@ -684,6 +684,8 @@ responses %>%
 	theme(text = element_text(size=16, family = "Helvetica")) +
 	theme(strip.background = element_rect(colour="white", fill="white")) + xlab("Temperature (°C)") +
 	ylab("Demand\n log(rate)")
+ggsave("figures/metabolic_rate_growth_rate_kT.png", width = 6.5, height = 3)
+ggsave("figures/metabolic_rate_growth_rate_kT.pdf", width = 6.5, height = 3)
 ggsave("figures/metabolic_rate_growth_rate.png", width = 6.5, height = 3)
 ggsave("figures/metabolic_rate_growth_rate.pdf", width = 6.5, height = 3)
 
