@@ -661,8 +661,8 @@ save_plot("figures/combined_panel_color.png", p,
 					base_aspect_ratio = 1.7)
 
 save_plot("figures/combined_panel_color.pdf", p,
-					ncol = 2, # we're saving a grid plot of 2 columns
-					nrow = 1, # and 2 rows
+					ncol = 1, # we're saving a grid plot of 2 columns
+					nrow = 2, # and 2 rows
 					# each individual subplot should have an aspect ratio of 1.3
 					base_aspect_ratio = 1.7)
 
