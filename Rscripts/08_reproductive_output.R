@@ -232,11 +232,12 @@ all_growth %>%
 	ggplot(aes(x = inverse_temp, y = log(clutch1_age))) + geom_jitter(height = 0.7, width = 0, size = 4, alpha = 0.5) +
 	geom_smooth(method = "lm", color = "black") +
 	scale_x_reverse() +
+	theme_bw() +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
-	theme(text = element_text(size=16, family = "Helvetica")) + ylab("log(Generation time, days)") + xlab("Temperature (1/kT)")
+	theme(text = element_text(size=16, family = "Helvetica")) + ylab("Log(Generation time, days)") + xlab("Temperature (1/kT)")
 ggsave("figures/generation_times_inverse.png", width = 5, height = 4)
 ggsave("figures/generation_times_inverse.pdf", width = 5, height = 4)
 
@@ -368,6 +369,29 @@ mass_corr_r_plot <- all7 %>%
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) + ylab(bquote('Log(r*'*mass^{1/4}*')')) + xlab("Temperature (1/kT)")
+
+
+all7 %>% 
+	filter(Linf < 4000) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	mutate(mass_corr_gen_time = clutch1_age*linf_mass^(1/4)) %>% 
+	mutate(log_mass = log(linf_mass)) %>% 
+	ggplot(aes(x = inverse_temp, y = log(clutch1_age), color = log_mass)) + geom_point(size = 4) +
+	geom_smooth(method = "lm", color = "black") +
+	scale_x_reverse() +
+	scale_color_viridis() + 
+	theme_bw() + 
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) + ylab(bquote('Log(r*'*mass^{1/4}*')')) + xlab("Temperature (1/kT)")
+
+all7 %>% 
+	filter(Linf < 4000) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	mutate(mass_corr_gen_time = clutch1_age*linf_mass^(1/4)) %>% 
+	do(tidy(lm(mass_corr_gen_time ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
 
 q <- plot_grid(mass_corr_r_plot, fitness_plot, labels = c("A", "B"), nrow = 2, align = "v")
