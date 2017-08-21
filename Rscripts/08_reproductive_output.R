@@ -220,13 +220,13 @@ all_growth <- read_csv("data-processed/all_growth.csv")
 
 all4 <- left_join(w_babies_size, all_growth)
 
-
+all_growth2 <- left_join(all_growth, mass, by = c("temperature", "replicate"))
 
 
 # Generation time ---------------------------------------------------------
 
 ## graph of generation time
-all_growth %>% 
+all_growth2 %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	filter(clutch1_age < 60) %>% 
 	ggplot(aes(x = inverse_temp, y = log(clutch1_age))) + geom_jitter(height = 0.7, width = 0, size = 4, alpha = 0.5) +
@@ -347,12 +347,26 @@ tidy(mod2)
 
 vb <- read_csv("data-processed/von_bert_mass.csv")
 
+
 all7 <- left_join(vb, all6, by = c("temperature", "replicate"))
-all7 %>% 
+generation_time_plot <- all7 %>% 
 	# filter(Linf < 4000) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
-	mutate(mass_corr_r =babies_per_time*linf_mass^(1/4)) %>% 
-	do(tidy(lm(log(mass_corr_r) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+	mutate(log_mass = log(linf_mass)) %>% 
+	mutate(mass_corr_T =clutch1_age*linf_mass^(1/4)) %>% 
+	# do(tidy(lm(log(mass_corr_T) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+	ggplot(aes(x = inverse_temp, y = mass_corr_T, color = log_mass)) + 
+	# geom_point(size = 4) +
+	geom_jitter(height = 0.7, width = 0, size = 4) +
+	geom_smooth(method = "lm", color = "black") +
+	scale_x_reverse() +
+	scale_color_viridis() + 
+	theme_bw() + 
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) + ylab(bquote('Log(generation time*'*mass^{1/4}*')')) + xlab("Temperature (1/kT)")
 
 mass_corr_r_plot <- all7 %>% 
 	filter(Linf < 4000) %>% 
@@ -370,13 +384,21 @@ mass_corr_r_plot <- all7 %>%
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) + ylab(bquote('Log(r*'*mass^{1/4}*')')) + xlab("Temperature (1/kT)")
 
+### slope of intrinsic growth rate activation energy
+all7 %>% 
+	filter(Linf < 4000) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	mutate(mass_corr_r = babies_per_time*linf_mass^(1/4)) %>% 
+	do(tidy(lm(log(mass_corr_r) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+
 
 all7 %>% 
 	filter(Linf < 4000) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	mutate(mass_corr_gen_time = clutch1_age*linf_mass^(1/4)) %>% 
 	mutate(log_mass = log(linf_mass)) %>% 
-	ggplot(aes(x = inverse_temp, y = log(clutch1_age), color = log_mass)) + geom_point(size = 4) +
+	ggplot(aes(x = inverse_temp, y = log(mass_corr_gen_time), color = log_mass)) + geom_point(size = 4) +
 	geom_smooth(method = "lm", color = "black") +
 	scale_x_reverse() +
 	scale_color_viridis() + 
@@ -387,23 +409,24 @@ all7 %>%
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) + ylab(bquote('Log(r*'*mass^{1/4}*')')) + xlab("Temperature (1/kT)")
 
+### slope of mass corr generation time activation energy
 all7 %>% 
 	filter(Linf < 4000) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	mutate(mass_corr_gen_time = clutch1_age*linf_mass^(1/4)) %>% 
-	do(tidy(lm(mass_corr_gen_time ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+	do(tidy(lm(log(mass_corr_gen_time) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
 
-q <- plot_grid(mass_corr_r_plot, fitness_plot, labels = c("A", "B"), nrow = 2, align = "v")
+q <- plot_grid(generation_time_plot, mass_corr_r_plot, fitness_plot, labels = c("A", "B", "C"), nrow = 3, align = "v")
 save_plot("figures/fitness_color.png", q,
 					ncol = 1, # we're saving a grid plot of 2 columns
-					nrow = 2, # and 2 rows
+					nrow = 3, # and 2 rows
 					# each individual subplot should have an aspect ratio of 1.3
 					base_aspect_ratio = 1.7)
 
 save_plot("figures/fitness_color.pdf", q,
 					ncol = 1, # we're saving a grid plot of 2 columns
-					nrow = 2, # and 2 rows
+					nrow = 3, # and 2 rows
 					# each individual subplot should have an aspect ratio of 1.3
 					base_aspect_ratio = 1.7)
 
