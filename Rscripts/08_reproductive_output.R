@@ -227,14 +227,24 @@ all4 <- left_join(w_babies_size, all_growth)
 
 ## graph of generation time
 all_growth %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	filter(clutch1_age < 60) %>% 
-	ggplot(aes(x = temperature, y = clutch1_age)) + geom_jitter(height = 0.7, width = 0, size = 4, alpha = 0.5) +
-	geom_smooth(color = "black") +
+	ggplot(aes(x = inverse_temp, y = log(clutch1_age))) + geom_jitter(height = 0.7, width = 0, size = 4, alpha = 0.5) +
+	geom_smooth(method = "lm", color = "black") +
+	scale_x_reverse() +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
-	theme(text = element_text(size=16, family = "Helvetica")) + ylab("Generation time (days") + xlab("Temperature (°C)")
+	theme(text = element_text(size=16, family = "Helvetica")) + ylab("log(Generation time, days)") + xlab("Temperature (1/kT)")
+ggsave("figures/generation_times_inverse.png", width = 5, height = 4)
+ggsave("figures/generation_times_inverse.pdf", width = 5, height = 4)
+
+
+all_growth %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	filter(clutch1_age < 60) %>% 
+	do(tidy(lm(log(clutch1_age) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
 lifespan <- read_csv("data-raw/lifespan_clutches.csv", n_max = 40)
 
@@ -258,6 +268,11 @@ generation_time_tsr <- all_growth %>%
 	mutate(experiment = "tsr")
 
 all_generation_times <- bind_rows(generation_time_lifespan, generation_time_tsr)
+
+all_generation_times %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	filter(generation_time < 60) %>% 
+	do(tidy(lm(log(generation_time) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
 generation_times_plot <- all_generation_times %>%
 	# filter(experiment == "tsr") %>% 
