@@ -609,8 +609,35 @@ all3 %>%
 
 ### K vs temperature
 all3 %>% 
+	filter(Linf < 4000) %>% 
 	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%
 	do(tidy(lm(log(K) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+## ci for slope = -Ea/b: -0.211, -0.92)
+
+all3 %>% 
+	filter(Linf < 4000) %>% 
+	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%
+	do(tidy(lm(log(linf_mass) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+all3 %>% 
+	filter(Linf < 4000) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	ggplot(aes(x = inverse_temp, y = log(linf_mass))) + geom_point() +
+	geom_smooth(method = "lm", color = "black") + 
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) + 
+	scale_x_reverse() +
+	ylim(-3.6, -2) +
+	# stat_function( fun = prediction, color = "black", linetype = "dashed") +
+	annotate("text", label = "Predicted slope (-Ea/b) = -0.46;\n Observed slope = -0.30; CIs (-0.46, -0.14)", x = 40, y = -3.5, size = 5) +
+	ylab("log (asymptotic body mass)") + xlab("Temperature (1/kT)")
+ggsave("figures/mass_vs_inverse_temp.png", width = 5, height = 4)
+ggsave("figures/mass_vs_inverse_temp.pdf", width = 5.5, height = 4)
+
 
 resp.mass <- read_csv("data-raw/resp.mass.csv")
 
@@ -619,6 +646,7 @@ resp <- resp.mass %>%
 	mutate(measurement = "Mass-normalized metablic rate")
 
 Ks <- all3 %>% 
+	filter(Linf < 4000) %>% 
 	select(temperature, K, replicate) %>% 
 	mutate(measurement = "Growth constant (k)") %>% 
 	mutate(rate = K)
@@ -646,7 +674,7 @@ ggsave("figures/activation_energies.pdf", width = 6, height = 3)
 
 responses %>% 
 	ggplot(aes(x = temperature, y = log(rate))) + geom_point() +
-	facet_wrap( ~ measurement, scales = "free") + 
+	facet_wrap( ~ measurement, scales = "free_y") + 
 	# scale_x_reverse() +
 	geom_smooth(method = "lm", color = "black")+
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
