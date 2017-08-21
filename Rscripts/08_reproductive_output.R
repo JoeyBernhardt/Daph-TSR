@@ -310,13 +310,14 @@ all6 <- all5 %>%
 # all6b <- bind_rows(all6, summer_27)
 
 
-all6 %>% 
+fitness_plot <- all6 %>% 
 	rename(`Temperature (°C)` = Temperature) %>% 
 	ggplot(aes(x = mass, y = babies_per_time, group = `Temperature (°C)`, color = `Temperature (°C)`)) + geom_point(size = 3) +
 	# facet_wrap( ~ temperature, scales = "free") +
 	geom_smooth(method = "lm") +
 	# ylim(0, 1.3) +
 	xlim(0.025, 0.125) +
+	theme_bw() +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
@@ -328,6 +329,59 @@ all6 %>%
 ggsave("figures/offspring_per_day.pdf", width = 8, height = 5)
 ggsave("figures/offspring_per_day.png", width = 8, height = 5)
 
+
+# stats for intrinsic growth rate -----------------------------------------
+library(visreg)
+library(nlme)
+library(cowplot)
+mod <- lm(babies_per_time ~ mass*temperature, data = all6)
+summary(mod)
+visreg(mod)
+tidy(mod, conf.int = TRUE) %>% View
+
+# mod2 <- lme(babies_per_time ~ mass*temperature, data = all6)
+mod2 <- lmer(babies_per_time ~ mass*temperature + (1|temperature), data = all6)
+summary(mod2)
+tidy(mod2)
+
+vb <- read_csv("data-processed/von_bert_mass.csv")
+
+all7 <- left_join(vb, all6, by = c("temperature", "replicate"))
+all7 %>% 
+	# filter(Linf < 4000) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	mutate(mass_corr_r =babies_per_time*linf_mass^(1/4)) %>% 
+	do(tidy(lm(log(mass_corr_r) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
+mass_corr_r_plot <- all7 %>% 
+	filter(Linf < 4000) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	mutate(mass_corr_r = babies_per_time*linf_mass^(1/4)) %>% 
+	mutate(log_mass = log(linf_mass)) %>% 
+	ggplot(aes(x = inverse_temp, y = log(mass_corr_r), color = log_mass)) + geom_point(size = 4) +
+	geom_smooth(method = "lm", color = "black") +
+	scale_x_reverse() +
+	scale_color_viridis() + 
+	theme_bw() + 
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) + ylab(bquote('Log(r*'*mass^{1/4}*')')) + xlab("Temperature (1/kT)")
+
+
+q <- plot_grid(mass_corr_r_plot, fitness_plot, labels = c("A", "B"), nrow = 2, align = "v")
+save_plot("figures/fitness_color.png", q,
+					ncol = 1, # we're saving a grid plot of 2 columns
+					nrow = 2, # and 2 rows
+					# each individual subplot should have an aspect ratio of 1.3
+					base_aspect_ratio = 1.7)
+
+save_plot("figures/fitness_color.pdf", q,
+					ncol = 1, # we're saving a grid plot of 2 columns
+					nrow = 2, # and 2 rows
+					# each individual subplot should have an aspect ratio of 1.3
+					base_aspect_ratio = 1.7)
 
 all6 %>% 
 	rename(`Temperature (°C)` = Temperature) %>% 
