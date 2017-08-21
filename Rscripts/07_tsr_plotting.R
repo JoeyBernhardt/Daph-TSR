@@ -692,7 +692,8 @@ ggsave("figures/metabolic_rate_growth_rate.pdf", width = 6.5, height = 3)
 all3 %>% 
 	filter(Linf < 4000) %>% 
 	mutate(inverse_temp = (-1/(.00008617*(temperature+273.15)))) %>%
-	do(tidy(lm(linf_mass ~ temperature, data = .), conf.int = TRUE)) %>% View
+	do(tidy(lm(log(linf_mass) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+
 
 
 all3 %>% 
