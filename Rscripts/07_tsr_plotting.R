@@ -30,29 +30,37 @@ size2 <- clean_names(size) %>%
 size2 %>% 
 	filter(actual_size_um > 0) %>% 
 	filter(stage != "neonate") %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	mutate(mass =  0.00402*((actual_size_um/1000)^2.66)) %>% 
-	mutate(stage = ifelse(stage == "clutch1", "Size at clutch 1", stage)) %>% 
-	mutate(stage = ifelse(stage == "clutch2", "Size at clutch 2", stage)) %>% 
-	mutate(stage = ifelse(stage == "clutch3", "Size at clutch 3", stage)) %>% 
-	ggplot(aes(x = temperature, y = mass)) + geom_point() +
-	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("Body size (mg DW)") + xlab("Temperature (°C)") +
+	mutate(log_mass =  log(mass)) %>% 
+	mutate(stage = ifelse(stage == "clutch1", "A) Size at clutch 1", stage)) %>% 
+	mutate(stage = ifelse(stage == "clutch2", "B) Size at clutch 2", stage)) %>% 
+	mutate(stage = ifelse(stage == "clutch3", "C) Size at clutch 3", stage)) %>% 
+	ggplot(aes(x = inverse_temp, y = log_mass)) + geom_point(size = 3) +
+	scale_x_reverse() +
+	# scale_x_continuous(sec.axis = sec_axis(~(1/(inverse_temp))+273)) +  
+	geom_smooth(method = "lm", color = "black") + theme_bw() + ylab("Log body size (mg DW)") + xlab("Temperature (1/kT)") +
 	facet_wrap( ~ stage) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) +
-	theme(strip.background = element_rect(colour="white", fill="white"))
-ggsave("figures/size_over_clutches.pdf")
-ggsave("figures/size_over_clutches.png")
+	theme(strip.background = element_rect(colour="white", fill="white")) 
+ggsave("figures/size_over_clutches.pdf", width = 9, height = 3.5)
+ggsave("figures/size_over_clutches.png", width = 9, height = 3.5)
+
 
 ## what are the slopes on the size vs. temp relationships?
 size2 %>% 
 	filter(actual_size_um > 0) %>% 
 	filter(stage != "neonate") %>% 
 	mutate(mass =  0.00402*((actual_size_um/1000)^2.66)) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	mutate(mass =  0.00402*((actual_size_um/1000)^2.66)) %>% 
+	mutate(log_mass =  log(mass)) %>% 
 	group_by(stage) %>% 
-	do(tidy(lm(mass ~ temperature, data =.), conf.int = TRUE)) %>% View
+	do(tidy(lm(log_mass ~ inverse_temp, data =.), conf.int = TRUE)) %>% View
 
 
 max_size <- size2 %>% 
@@ -599,6 +607,16 @@ ggsave("figures/winter_trade_off.pdf", width = 8, height = 5)
 ggsave("figures/winter_trade_off.png", width = 8, height = 5)
 
 
+# Residuals ---------------------------------------------------------------
+
+
+all3 %>% 
+	do(tidy(lm(log(linf_mass)~ log(K), data = .), conf.int = TRUE)) %>% View
+
+mod <- lm(log(linf_mass)~ log(K), data = all3)
+resids <- augment(mod, data = all3)
+write_csv(resids, "data-processed/residuals_size_rate.csv")
+
 ## now let's try to maatch up growth rate with metabolic rate
 
 
@@ -701,17 +719,18 @@ ggsave("figures/activation_energies.pdf", width = 6, height = 3)
 ### figure of growth constant and metabolic rate!
 
 responses %>% 
-	ggplot(aes(x = temperature, y = log(rate))) + geom_point() +
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	ggplot(aes(x = inverse_temp, y = log(rate))) + geom_point(size = 2, alpha = 0.7) +
 	facet_wrap( ~ measurement, scales = "free_y") + 
-	# scale_x_reverse() +
+	scale_x_reverse() +
 	geom_smooth(method = "lm", color = "black")+
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) +
-	theme(strip.background = element_rect(colour="white", fill="white")) + xlab("Temperature (°C)") +
-	ylab("Demand\n log(rate)")
+	theme(strip.background = element_rect(colour="white", fill="white")) + xlab("Temperature (1/kT)") +
+	ylab("Log (rate of demand)")
 ggsave("figures/metabolic_rate_growth_rate_kT.png", width = 6.5, height = 3)
 ggsave("figures/metabolic_rate_growth_rate_kT.pdf", width = 6.5, height = 3)
 ggsave("figures/metabolic_rate_growth_rate.png", width = 6.5, height = 3)
@@ -734,7 +753,7 @@ rma <- lmodel2(log(linf_mass) ~ log(K), data = all3, range.y = "interval", range
 rma$regression.results
 rma$confidence.intervals
 rma$rsquare
-
+augment(rma)
 
 model_results <- size2 %>% 
 	filter(actual_size_um > 0) %>% 

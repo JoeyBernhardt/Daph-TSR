@@ -185,8 +185,6 @@ w_babies <- winter_tsr_babies %>%
 	mutate(stage = ifelse(clutch_number == 2, "clutch2", stage)) %>% 
 	mutate(stage = ifelse(clutch_number == 3, "clutch3", stage))
 
-w_babies %>% 
-	filter(temperature == 27 & replicate == 4) %>% View
 
 size <- read_csv("data-raw/daph_tsr_body_size.csv")
 
@@ -223,6 +221,13 @@ all4 <- left_join(w_babies_size, all_growth)
 all_growth2 <- left_join(all_growth, mass, by = c("temperature", "replicate"))
 
 
+
+# fecundity vs. growth rate trade-off? ------------------------------------
+
+
+
+
+
 # Generation time ---------------------------------------------------------
 
 ## graph of generation time
@@ -241,6 +246,20 @@ all_growth2 %>%
 ggsave("figures/generation_times_inverse.png", width = 5, height = 4)
 ggsave("figures/generation_times_inverse.pdf", width = 5, height = 4)
 
+all_growth2 %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	filter(clutch1_age < 60) %>% 
+	filter(replicate != "27_4") %>% 
+	ggplot(aes(x = clutch3_size, y = clutch3_age, color = factor(temperature))) + geom_jitter(height = 0.7, width = 0, size = 4, alpha = 0.5) +
+	geom_smooth(method = "lm", color = "black") +
+	# scale_x_reverse() +
+	theme_bw() +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) + ylab("Log(Generation time, days)") + xlab("mass") +
+	facet_wrap( ~ temperature, scales = "free")
 
 all_growth %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
@@ -306,7 +325,42 @@ all6 <- all5 %>%
 	ungroup()
 
 
+all7 <- left_join(all6, mass, by = c("temperature", "replicate"))
 
+all7 %>%
+	 filter(Linf < 4000) %>% 
+	# filter(temperature == 20) %>% 
+	ggplot(aes(x = K, y = number_of_babies_average_mean, color = factor(temperature))) + geom_point() +
+	geom_smooth(method = "lm")
+
+all7 %>% 
+	do(tidy(lm(number_of_babies_average_mean ~ K, data = .), conf.int = TRUE)) %>% View
+
+all7 %>% 
+lm(number_of_babies_average_mean ~ somatic_growth_rate*temperature, data = .) %>%
+	summary()
+
+
+rma <- lmodel2(number_of_babies_average_mean ~ K, data = all7, range.y = "interval", range.x = "interval")
+rma$regression.results
+rma$confidence.intervals
+rma$rsquare
+
+
+# bring in size rate resids -----------------------------------------------
+
+resids <- read_csv("data-processed/residuals_size_rate.csv")
+resids2 <- resids %>% 
+	select(replicate, temperature, .resid, .std.resid)
+
+all8 <- all7 %>% 
+	select(temperature, replicate, babies_per_time, number_of_babies_average_mean)
+fit_resids <- left_join(all8, resids2)
+
+fit_resids %>% 
+	# filter(abs(.resid) < 0.6) %>% 
+	ggplot(aes(x = abs(.resid), y = babies_per_time, color = factor(temperature))) + geom_point() +
+	geom_smooth(method = "lm", color = "black")
 
 # all6b <- bind_rows(all6, summer_27)
 
@@ -325,7 +379,8 @@ fitness_plot <- all6 %>%
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) + geom_smooth(method = "lm", aes(fill = `Temperature (°C)`)) +
 	xlab("Body size (mg DW)") + ylab("Intrinsic rate of increase (r)") + scale_color_viridis(discrete = TRUE) +
-	scale_fill_viridis(discrete = TRUE) 
+	scale_fill_viridis(discrete = TRUE) +
+	theme(legend.position = "top")
 	# + geom_abline(slope = -31.640328, intercept = 2.979307, color = "grey", linetype = "dashed", size = 1) 
 ggsave("figures/offspring_per_day.pdf", width = 8, height = 5)
 ggsave("figures/offspring_per_day.png", width = 8, height = 5)
@@ -355,12 +410,11 @@ generation_time_plot <- all7 %>%
 	mutate(log_mass = log(linf_mass)) %>% 
 	mutate(mass_corr_T =clutch1_age*linf_mass^(1/4)) %>% 
 	# do(tidy(lm(log(mass_corr_T) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
-	ggplot(aes(x = inverse_temp, y = mass_corr_T, color = log_mass)) + 
+	ggplot(aes(x = inverse_temp, y = mass_corr_T)) + 
 	# geom_point(size = 4) +
-	geom_jitter(height = 0.7, width = 0, size = 4) +
+	geom_jitter(height = 0.7, width = 0, size = 4, alpha = 0.7) +
 	geom_smooth(method = "lm", color = "black") +
 	scale_x_reverse() +
-	scale_color_viridis() + 
 	theme_bw() + 
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
@@ -373,10 +427,9 @@ mass_corr_r_plot <- all7 %>%
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	mutate(mass_corr_r = babies_per_time*linf_mass^(1/4)) %>% 
 	mutate(log_mass = log(linf_mass)) %>% 
-	ggplot(aes(x = inverse_temp, y = log(mass_corr_r), color = log_mass)) + geom_point(size = 4) +
+	ggplot(aes(x = inverse_temp, y = log(mass_corr_r))) + geom_point(size = 4, alpha = 0.5) +
 	geom_smooth(method = "lm", color = "black") +
 	scale_x_reverse() +
-	scale_color_viridis() + 
 	theme_bw() + 
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
@@ -416,8 +469,13 @@ all7 %>%
 	mutate(mass_corr_gen_time = clutch1_age*linf_mass^(1/4)) %>% 
 	do(tidy(lm(log(mass_corr_gen_time) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
-
+?grid.arrange
+library(cowplot)
+library(gridExtra)
 q <- plot_grid(generation_time_plot, mass_corr_r_plot, fitness_plot, labels = c("A", "B", "C"), nrow = 3, align = "v")
+p <- grid.arrange(generation_time_plot, mass_corr_r_plot, fitness_plot, nrow = 3)
+ggsave(plot = p, "figures/fitness_plot_all.png", height = 12, width = 5)
+ggsave(plot = p, "figures/fitness_plot_all.pdf", height = 12, width = 5)
 save_plot("figures/fitness_color.png", q,
 					ncol = 1, # we're saving a grid plot of 2 columns
 					nrow = 3, # and 2 rows
