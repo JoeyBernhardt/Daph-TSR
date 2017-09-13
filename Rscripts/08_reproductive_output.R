@@ -13,13 +13,15 @@ library(car)
 library(FSA)
 library(lmodel2)
 library(viridis)
+library(stringr)
 
-
+install.packages("ggplot2")
 
 # read data ---------------------------------------------------------------
 
 number_of_clutches <- read_csv("data-raw/lifespan_clutches.csv", n_max = 40)
 total_clutches_27 <- read_csv("data-raw/total_clutches_27.csv")
+total_clutches <- read_csv("data-raw/daphnia_lifespan_clutches.csv")
 babies <- read_csv("data-raw/lifespan_clutch_numbers.csv")
 
 babies27 <- babies %>% 
@@ -28,6 +30,14 @@ babies27 <- babies %>%
 clutch27 <- number_of_clutches %>% 
 	filter(temperature == 27) %>% 
 	mutate(mass =  0.00402*((max_body_size/1000)^2.66)) ## here length is in mm, so we need to divide by 1000
+
+
+
+total_clutches %>% 
+	ggplot(aes(x = max_body_size, y = total_clutches)) + geom_point() +
+	geom_smooth(method = "lm") +
+	facet_wrap( ~ temperature, scales = "free")
+
 
 all27 <- left_join(clutch27, total_clutches_27)
 
@@ -367,6 +377,7 @@ fit_resids %>%
 
 fitness_plot <- all6 %>% 
 	rename(`Temperature (°C)` = Temperature) %>% 
+	distinct(babies_per_time, .keep_all = TRUE) %>% 
 	ggplot(aes(x = mass, y = babies_per_time, group = `Temperature (°C)`, color = `Temperature (°C)`)) + geom_point(size = 3) +
 	# facet_wrap( ~ temperature, scales = "free") +
 	geom_smooth(method = "lm") +
@@ -543,3 +554,105 @@ all6 %>%
 	filter(unique != "27_4") %>% 
 	mutate(babies_per_time = number_of_babies_sum/clutch3_age) %>% 
 	do(tidy(lm(babies_per_time ~ mass, data = .), conf.int = TRUE)) %>% View
+
+
+
+
+# Selection differentials -------------------------------------------------
+
+## use all6 to calculate selection differentials
+## Notes from chapter in the Connor and Hartl book, section 6.1
+## to do this, we need to standardize the body size data (For measurements of selection it is very useful to standardize the phenotypic values by taking
+## each individual value and subtracting the population mean and dividing by the population standard deviation.)
+## and calculate relative fitness (For the actual analysis relative fitness values are used, which are calculated by dividing the fitness of each
+## individual by the average fitness of the population.)
+
+seldata <- all6 %>% 
+	select(babies_per_time, temperature, unique, mass) %>% 
+	filter(!is.na(babies_per_time))
+
+
+sel_summ_all <- seldata %>% 
+	summarise_each(funs(mean, sd), mass, babies_per_time) 
+
+seldata %>% 
+	mutate(std_mass = (mass - sel_summ$mass_mean[[1]])/sel_summ$mass_sd[[1]]) %>% 
+	mutate(relative_fitness = babies_per_time/sel_summ$babies_per_time_mean[[1]]) %>% 
+	distinct(relative_fitness, .keep_all = TRUE) %>% 
+	lm(relative_fitness ~ std_mass + temperature, data = .) %>% 
+	# do(tidy(lm(babies_per_time ~ mass + temperature, data = .), conf.int = TRUE)) %>% View
+	summary()
+	
+
+	
+seldata %>% 
+	distinct(mass, .keep_all = TRUE) %>%
+	mutate(std_mass = (mass - sel_summ$mass_mean[[1]])/sel_summ$mass_sd[[1]]) %>% 
+	mutate(relative_fitness = babies_per_time/sel_summ$babies_per_time_mean[[1]]) %>% 
+	# filter(mass < 0.075) %>% 
+	lm(relative_fitness ~ std_mass + temperature, data = .) %>% 
+	# distinct(relative_fitness, .keep_all = TRUE) %>% 
+	# do(tidy(lm(babies_per_time ~ mass + temperature, data = .), conf.int = TRUE)) %>% View
+	summary()
+
+seldata %>% 
+	mutate(std_mass = (mass - sel_summ$mass_mean[[1]])/sel_summ$mass_sd[[1]]) %>% 
+	mutate(relative_fitness = babies_per_time/sel_summ$babies_per_time_mean[[1]]) %>% 
+	distinct(relative_fitness, .keep_all = TRUE) %>% 
+	do(tidy(lm(relative_fitness ~ std_mass, data = .), conf.int = TRUE)) %>% View
+	# filter(mass < 0.075) %>% 
+	ggplot(aes(x = std_mass, y = relative_fitness)) + geom_point() +
+	geom_smooth(method = "lm", color = "black") +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica"))
+
+sel_summ <- seldata %>% 
+	group_by(temperature) %>% 
+summarise_each(funs(mean, sd), mass, babies_per_time) %>% 
+	ungroup()
+
+sel_std <- seldata %>% 
+	mutate(std_mass = ifelse(temperature == 10, ((mass - sel_summ$mass_mean[sel_summ$temperature == 10])/sel_summ$mass_sd[sel_summ$temperature == 10]), mass)) %>% 
+	mutate(std_mass = ifelse(temperature == 16, ((mass - sel_summ$mass_mean[sel_summ$temperature == 16])/sel_summ$mass_sd[sel_summ$temperature == 16]), mass)) %>% 
+	mutate(std_mass = ifelse(temperature == 20, ((mass - sel_summ$mass_mean[sel_summ$temperature == 20])/sel_summ$mass_sd[sel_summ$temperature == 20]), mass)) %>% 
+	mutate(std_mass = ifelse(temperature == 24, ((mass - sel_summ$mass_mean[sel_summ$temperature == 24])/sel_summ$mass_sd[sel_summ$temperature == 24]), mass)) %>% 
+	mutate(std_mass = ifelse(temperature == 27, ((mass - sel_summ$mass_mean[sel_summ$temperature == 27])/sel_summ$mass_sd[sel_summ$temperature == 27]), mass)) %>% 
+	mutate(rel_fitness = ifelse(temperature == 10, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 10], babies_per_time)) %>% 
+	mutate(rel_fitness = ifelse(temperature == 16, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 16], babies_per_time)) %>% 
+	mutate(rel_fitness = ifelse(temperature == 20, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 20], babies_per_time)) %>% 
+	mutate(rel_fitness = ifelse(temperature == 24, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 24], babies_per_time)) %>% 
+	mutate(rel_fitness = ifelse(temperature == 27, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 27], babies_per_time)) 
+	
+
+names(sel_std)
+
+sel_std %>% 
+	distinct(rel_fitness, .keep_all = TRUE) %>% 
+	ggplot(aes(x = std_mass, y = rel_fitness)) + geom_point() + 
+	geom_smooth(method = "lm", color = "black") +
+	facet_wrap( ~ temperature, scales = "free") +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) +
+	ylab("Relative fitness") + xlab("Body mass (standardized)") 
+ggsave("figures/fitness_functions.png", width = 8, height = 5)
+
+sel_std %>% 
+	distinct(rel_fitness, .keep_all = TRUE) %>% 
+	group_by(temperature) %>% 
+	do(tidy(lm(rel_fitness ~ std_mass, data = .), conf.int = TRUE)) %>% 
+	filter(term != "(Intercept)") %>% 
+	ggplot(aes(x = temperature, y = estimate)) + geom_point(size = 3) +
+	geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.1) +
+	theme_bw() + ylab("Selection differential (S)") + xlab("Temperature (°C)") +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) + geom_hline(yintercept = 0)
+ggsave("figures/selection_differential.png", width = 3, height = 3)
