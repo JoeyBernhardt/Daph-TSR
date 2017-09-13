@@ -15,7 +15,6 @@ library(lmodel2)
 library(viridis)
 library(stringr)
 
-install.packages("ggplot2")
 
 # read data ---------------------------------------------------------------
 
@@ -35,8 +34,13 @@ clutch27 <- number_of_clutches %>%
 
 total_clutches %>% 
 	ggplot(aes(x = max_body_size, y = total_clutches)) + geom_point() +
+	geom_smooth(method = "lm") 
+
+
+total_clutches %>% 
+	ggplot(aes(x = temperature, y = max_body_size)) + geom_point() +
 	geom_smooth(method = "lm") +
-	facet_wrap( ~ temperature, scales = "free")
+	facet_wrap( ~ temperature)
 
 
 all27 <- left_join(clutch27, total_clutches_27)
@@ -575,11 +579,16 @@ seldata <- all6 %>%
 sel_summ_all <- seldata %>% 
 	summarise_each(funs(mean, sd), mass, babies_per_time) 
 
+sel_summ <- seldata %>% 
+	group_by(temperature) %>% 
+	summarise_each(funs(mean, sd), mass, babies_per_time) %>% 
+	ungroup()
+
 seldata %>% 
 	mutate(std_mass = (mass - sel_summ$mass_mean[[1]])/sel_summ$mass_sd[[1]]) %>% 
 	mutate(relative_fitness = babies_per_time/sel_summ$babies_per_time_mean[[1]]) %>% 
 	distinct(relative_fitness, .keep_all = TRUE) %>% 
-	lm(relative_fitness ~ std_mass + temperature, data = .) %>% 
+	lm(relative_fitness ~ std_mass, data = .) %>% 
 	# do(tidy(lm(babies_per_time ~ mass + temperature, data = .), conf.int = TRUE)) %>% View
 	summary()
 	
@@ -589,8 +598,8 @@ seldata %>%
 	distinct(mass, .keep_all = TRUE) %>%
 	mutate(std_mass = (mass - sel_summ$mass_mean[[1]])/sel_summ$mass_sd[[1]]) %>% 
 	mutate(relative_fitness = babies_per_time/sel_summ$babies_per_time_mean[[1]]) %>% 
-	# filter(mass < 0.075) %>% 
-	lm(relative_fitness ~ std_mass + temperature, data = .) %>% 
+	filter(mass < 0.075) %>% 
+	lm(relative_fitness ~ std_mass, data = .) %>% 
 	# distinct(relative_fitness, .keep_all = TRUE) %>% 
 	# do(tidy(lm(babies_per_time ~ mass + temperature, data = .), conf.int = TRUE)) %>% View
 	summary()
@@ -599,7 +608,7 @@ seldata %>%
 	mutate(std_mass = (mass - sel_summ$mass_mean[[1]])/sel_summ$mass_sd[[1]]) %>% 
 	mutate(relative_fitness = babies_per_time/sel_summ$babies_per_time_mean[[1]]) %>% 
 	distinct(relative_fitness, .keep_all = TRUE) %>% 
-	do(tidy(lm(relative_fitness ~ std_mass, data = .), conf.int = TRUE)) %>% View
+	# do(tidy(lm(relative_fitness ~ std_mass, data = .), conf.int = TRUE)) %>% View
 	# filter(mass < 0.075) %>% 
 	ggplot(aes(x = std_mass, y = relative_fitness)) + geom_point() +
 	geom_smooth(method = "lm", color = "black") +
@@ -607,12 +616,11 @@ seldata %>%
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
-	theme(text = element_text(size=16, family = "Helvetica"))
+	theme(text = element_text(size=16, family = "Helvetica")) + ylab("Relative fitness") +
+	xlab("Standardized body mass (mg)")
+ggsave("figures/fitness_function_all_temps.png")
 
-sel_summ <- seldata %>% 
-	group_by(temperature) %>% 
-summarise_each(funs(mean, sd), mass, babies_per_time) %>% 
-	ungroup()
+
 
 sel_std <- seldata %>% 
 	mutate(std_mass = ifelse(temperature == 10, ((mass - sel_summ$mass_mean[sel_summ$temperature == 10])/sel_summ$mass_sd[sel_summ$temperature == 10]), mass)) %>% 
