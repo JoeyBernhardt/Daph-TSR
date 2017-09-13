@@ -596,8 +596,8 @@ seldata %>%
 	
 seldata %>% 
 	distinct(mass, .keep_all = TRUE) %>%
-	mutate(std_mass = (mass - sel_summ$mass_mean[[1]])/sel_summ$mass_sd[[1]]) %>% 
-	mutate(relative_fitness = babies_per_time/sel_summ$babies_per_time_mean[[1]]) %>% 
+	mutate(std_mass = (mass - sel_summ_all$mass_mean[[1]])/sel_summ_all$mass_sd[[1]]) %>% 
+	mutate(relative_fitness = babies_per_time/sel_summ_all$babies_per_time_mean[[1]]) %>% 
 	filter(mass < 0.075) %>% 
 	lm(relative_fitness ~ std_mass, data = .) %>% 
 	# distinct(relative_fitness, .keep_all = TRUE) %>% 
@@ -605,8 +605,8 @@ seldata %>%
 	summary()
 
 seldata %>% 
-	mutate(std_mass = (mass - sel_summ$mass_mean[[1]])/sel_summ$mass_sd[[1]]) %>% 
-	mutate(relative_fitness = babies_per_time/sel_summ$babies_per_time_mean[[1]]) %>% 
+	mutate(std_mass = (mass - sel_summ_all$mass_mean[[1]])/sel_summ_all$mass_sd[[1]]) %>% 
+	mutate(relative_fitness = babies_per_time/sel_summ_all$babies_per_time_mean[[1]]) %>% 
 	distinct(relative_fitness, .keep_all = TRUE) %>% 
 	# do(tidy(lm(relative_fitness ~ std_mass, data = .), conf.int = TRUE)) %>% View
 	# filter(mass < 0.075) %>% 
@@ -664,3 +664,9 @@ sel_std %>%
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) + geom_hline(yintercept = 0)
 ggsave("figures/selection_differential.png", width = 3, height = 3)
+
+sel_std %>% 
+	distinct(rel_fitness, .keep_all = TRUE) %>% 
+	group_by(temperature) %>% 
+	do(glance(lm(rel_fitness ~ std_mass, data = .))) %>% View
+	augment()
