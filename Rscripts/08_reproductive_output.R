@@ -380,6 +380,7 @@ fit_resids %>%
 
 
 fitness_plot <- all6 %>% 
+	distinct(unique, .keep_all = TRUE) %>% 
 	rename(`Temperature (°C)` = Temperature) %>% 
 	distinct(babies_per_time, .keep_all = TRUE) %>% 
 	ggplot(aes(x = mass, y = babies_per_time, group = `Temperature (°C)`, color = `Temperature (°C)`)) + geom_point(size = 3) +
@@ -418,7 +419,8 @@ tidy(mod2)
 vb <- read_csv("data-processed/von_bert_mass.csv")
 
 
-all7 <- left_join(vb, all6, by = c("temperature", "replicate"))
+all7 <- left_join(vb, all6, by = c("temperature", "replicate")) %>% 
+	distinct(unique, .keep_all = TRUE)
 generation_time_plot <- all7 %>% 
 	# filter(Linf < 4000) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
@@ -484,7 +486,7 @@ all7 %>%
 	mutate(mass_corr_gen_time = clutch1_age*linf_mass^(1/4)) %>% 
 	do(tidy(lm(log(mass_corr_gen_time) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
-?grid.arrange
+	?grid.arrange
 library(cowplot)
 library(gridExtra)
 q <- plot_grid(generation_time_plot, mass_corr_r_plot, fitness_plot, labels = c("A", "B", "C"), nrow = 3, align = "v")
@@ -572,6 +574,7 @@ all6 %>%
 ## individual by the average fitness of the population.)
 
 seldata <- all6 %>% 
+	distinct(mass, .keep_all = TRUE) %>%
 	select(babies_per_time, temperature, unique, mass) %>% 
 	filter(!is.na(babies_per_time))
 
@@ -580,6 +583,7 @@ sel_summ_all <- seldata %>%
 	summarise_each(funs(mean, sd), mass, babies_per_time) 
 
 sel_summ <- seldata %>% 
+	distinct(unique, .keep_all = TRUE) %>% 
 	group_by(temperature) %>% 
 	summarise_each(funs(mean, sd), mass, babies_per_time) %>% 
 	ungroup()
@@ -617,37 +621,51 @@ seldata %>%
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) + ylab("Relative fitness") +
-	xlab("Standardized body mass (mg)")
+	xlab("Standardized body mass (mg)") 
 ggsave("figures/fitness_function_all_temps.png")
 
 
+hist(sel_std$std_mass[seldata$temperature == 10])
+
 
 sel_std <- seldata %>% 
-	mutate(std_mass = ifelse(temperature == 10, ((mass - sel_summ$mass_mean[sel_summ$temperature == 10])/sel_summ$mass_sd[sel_summ$temperature == 10]), mass)) %>% 
-	mutate(std_mass = ifelse(temperature == 16, ((mass - sel_summ$mass_mean[sel_summ$temperature == 16])/sel_summ$mass_sd[sel_summ$temperature == 16]), mass)) %>% 
-	mutate(std_mass = ifelse(temperature == 20, ((mass - sel_summ$mass_mean[sel_summ$temperature == 20])/sel_summ$mass_sd[sel_summ$temperature == 20]), mass)) %>% 
-	mutate(std_mass = ifelse(temperature == 24, ((mass - sel_summ$mass_mean[sel_summ$temperature == 24])/sel_summ$mass_sd[sel_summ$temperature == 24]), mass)) %>% 
-	mutate(std_mass = ifelse(temperature == 27, ((mass - sel_summ$mass_mean[sel_summ$temperature == 27])/sel_summ$mass_sd[sel_summ$temperature == 27]), mass)) %>% 
-	mutate(rel_fitness = ifelse(temperature == 10, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 10], babies_per_time)) %>% 
-	mutate(rel_fitness = ifelse(temperature == 16, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 16], babies_per_time)) %>% 
-	mutate(rel_fitness = ifelse(temperature == 20, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 20], babies_per_time)) %>% 
-	mutate(rel_fitness = ifelse(temperature == 24, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 24], babies_per_time)) %>% 
-	mutate(rel_fitness = ifelse(temperature == 27, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 27], babies_per_time)) 
+	distinct(unique, .keep_all = TRUE) %>% 
+	ungroup() %>% 
+	mutate(std_mass = NA) %>% 
+	mutate(std_mass = ifelse(temperature == 10, ((mass - sel_summ$mass_mean[sel_summ$temperature == 10])/sel_summ$mass_sd[sel_summ$temperature == 10]), std_mass)) %>% 
+	mutate(std_mass = ifelse(temperature == 16, ((mass - sel_summ$mass_mean[sel_summ$temperature == 16])/sel_summ$mass_sd[sel_summ$temperature == 16]), std_mass)) %>% 
+	mutate(std_mass = ifelse(temperature == 20, ((mass - sel_summ$mass_mean[sel_summ$temperature == 20])/sel_summ$mass_sd[sel_summ$temperature == 20]), std_mass)) %>% 
+	mutate(std_mass = ifelse(temperature == 24, ((mass - sel_summ$mass_mean[sel_summ$temperature == 24])/sel_summ$mass_sd[sel_summ$temperature == 24]), std_mass)) %>% 
+	mutate(std_mass = ifelse(temperature == 27, ((mass - sel_summ$mass_mean[sel_summ$temperature == 27])/sel_summ$mass_sd[sel_summ$temperature == 27]), std_mass)) %>% 
+	mutate(rel_fitness = NA) %>% 
+	mutate(rel_fitness = ifelse(temperature == 10, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 10], rel_fitness)) %>% 
+	mutate(rel_fitness = ifelse(temperature == 16, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 16], rel_fitness)) %>% 
+	mutate(rel_fitness = ifelse(temperature == 20, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 20], rel_fitness)) %>% 
+	mutate(rel_fitness = ifelse(temperature == 24, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 24], rel_fitness)) %>% 
+	mutate(rel_fitness = ifelse(temperature == 27, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 27], rel_fitness)) 
 	
 
 names(sel_std)
 
+
 sel_std %>% 
 	distinct(rel_fitness, .keep_all = TRUE) %>% 
-	ggplot(aes(x = std_mass, y = rel_fitness)) + geom_point() + 
-	geom_smooth(method = "lm", color = "black") +
-	facet_wrap( ~ temperature, scales = "free") +
+	mutate(temperature = ifelse(temperature == "10", "10°C", temperature)) %>% 
+	mutate(temperature = ifelse(temperature == "16", "16°C", temperature)) %>% 
+	mutate(temperature = ifelse(temperature == "20", "20°C", temperature)) %>% 
+	mutate(temperature = ifelse(temperature == "24", "24°C", temperature)) %>% 
+	mutate(temperature = ifelse(temperature == "27", "27°C", temperature)) %>% 
+	ggplot(aes(x = std_mass, y = rel_fitness, group = temperature, color = temperature)) + geom_point(size = 2) + 
+	geom_smooth(method = "lm", aes(fill = temperature)) +
+	facet_wrap( ~ temperature) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
 	theme(text = element_text(size=16, family = "Helvetica")) +
-	ylab("Relative fitness") + xlab("Body mass (standardized)") 
+	ylab("Relative fitness") + xlab("Body mass (standardized)") +
+	theme(strip.background = element_rect(colour="white", fill="white")) +
+	scale_color_viridis(discrete = TRUE) + scale_fill_viridis(discrete = TRUE) 
 ggsave("figures/fitness_functions.png", width = 8, height = 5)
 
 sel_std %>% 
