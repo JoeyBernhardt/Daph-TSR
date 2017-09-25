@@ -33,14 +33,52 @@ clutch27 <- number_of_clutches %>%
 
 
 total_clutches %>% 
+	ggplot(aes(x = temperature, y = max_body_size)) + geom_point() +
+	geom_smooth(method = "lm", color = "black") +theme_bw()
+ggsave("figures/lifespan_total_clutches_temperature.png")
+
+total_clutches %>% 
 	ggplot(aes(x = max_body_size, y = total_clutches)) + geom_point() +
-	geom_smooth(method = "lm") 
+	geom_smooth(method = "lm", color = "black") +theme_bw()
+ggsave("figures/lifespan_total_clutches_size.png")
+
+total_clutches %>% 
+	ggplot(aes(x = max_body_size, y = total_clutches)) + geom_point() +
+	geom_smooth(method = "lm") +
+	facet_wrap( ~ temperature)
+
+total_clutches %>% 
+	group_by(temperature) %>% 
+	do(tidy(lm(total_clutches ~ max_body_size, data = .), conf.int = TRUE)) %>% View
 
 
 total_clutches %>% 
-	ggplot(aes(x = temperature, y = max_body_size)) + geom_point() +
+	mutate(birth_date = mdy(birth_date)) %>% 
+	mutate(death_date = mdy(death_date)) %>% 
+	mutate(lifespan2 = interval(birth_date, death_date)/ddays(1)) %>%
+	select(lifespan2, everything()) %>%
+	ggplot(aes(x = temperature, y = lifespan2)) + geom_point() + geom_smooth(method = "lm") +
+	ylab("Lifespan (days)") + xlab("Temperature (°C)") + theme_bw()
+
+
+total_clutches %>% 
+	ggplot(aes(x = max_body_size, y = lifespan)) + geom_point() +
 	geom_smooth(method = "lm") +
 	facet_wrap( ~ temperature)
+
+total_clutches %>% 
+	# group_by(temperature) %>% 
+	do(tidy(lm(lifespan ~ max_body_size, data = .), conf.int = TRUE)) %>% View
+
+
+total_clutches %>% 
+	mutate(mass =  0.00402*((max_body_size/1000)^2.66)) %>% 
+	mutate(mass_corr_lifespan = lifespan*(mass^1/4)) %>% 
+	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
+	# ggplot(aes(x = inverse_temp, y = mass_corr_lifespan)) + geom_point() +
+	# geom_smooth(method = "lm") + scale_x_reverse()
+	do(tidy(lm(log(mass_corr_lifespan) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
+	
 
 
 all27 <- left_join(clutch27, total_clutches_27)
@@ -335,6 +373,7 @@ all6 <- all5 %>%
 	unite(unique, temperature, replicate, remove = FALSE) %>% 
 	filter(unique != "27_4") %>% 
 	mutate(babies_per_time = log(number_of_babies_sum)/clutch3_age) %>% 
+	mutate(r_mean = log(number_of_babies_average_sum)/clutch3_age) %>% 
 	mutate(Temperature = as.factor(temperature)) %>% 
 	ungroup()
 
@@ -486,7 +525,12 @@ all7 %>%
 	mutate(mass_corr_gen_time = clutch1_age*linf_mass^(1/4)) %>% 
 	do(tidy(lm(log(mass_corr_gen_time) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
-	?grid.arrange
+all7 %>% 
+	filter(Linf < 4000) %>% 
+	ggplot(aes(x = clutch1_size, y = clutch1_age, color = factor(temperature), group = temperature)) + geom_point() +
+	facet_wrap( ~ temperature, scales = "free") + geom_smooth(method = "lm")
+
+
 library(cowplot)
 library(gridExtra)
 q <- plot_grid(generation_time_plot, mass_corr_r_plot, fitness_plot, labels = c("A", "B", "C"), nrow = 3, align = "v")
@@ -564,6 +608,8 @@ all6 %>%
 
 
 
+
+
 # Selection differentials -------------------------------------------------
 
 ## use all6 to calculate selection differentials
@@ -574,10 +620,17 @@ all6 %>%
 ## individual by the average fitness of the population.)
 
 seldata <- all6 %>% 
-	distinct(mass, .keep_all = TRUE) %>%
-	select(babies_per_time, temperature, unique, mass) %>% 
+	distinct(unique, .keep_all = TRUE) %>%
+	rename(babies_per_time1 = babies_per_time) %>% 
+	rename(babies_per_time = r_mean) %>% 
+	select(temperature, unique, mass, babies_per_time, babies_per_time1) %>% 
 	filter(!is.na(babies_per_time))
 
+
+seldata %>% 
+	ggplot(aes(x = mass, y = r_mean, group = temperature, color = factor(temperature))) + geom_point() +
+	geom_smooth(method = "lm")
+	
 
 sel_summ_all <- seldata %>% 
 	summarise_each(funs(mean, sd), mass, babies_per_time) 
@@ -667,6 +720,7 @@ sel_std %>%
 	theme(strip.background = element_rect(colour="white", fill="white")) +
 	scale_color_viridis(discrete = TRUE) + scale_fill_viridis(discrete = TRUE) 
 ggsave("figures/fitness_functions.png", width = 8, height = 5)
+ggsave("figures/fitness_functions_color.png", width = 8, height = 5)
 
 sel_std %>% 
 	distinct(rel_fitness, .keep_all = TRUE) %>% 
@@ -687,4 +741,4 @@ sel_std %>%
 	distinct(rel_fitness, .keep_all = TRUE) %>% 
 	group_by(temperature) %>% 
 	do(glance(lm(rel_fitness ~ std_mass, data = .))) %>% View
-	augment()
+
