@@ -375,7 +375,8 @@ all6 <- all5 %>%
 	mutate(babies_per_time = log(number_of_babies_sum)/clutch3_age) %>% 
 	mutate(r_mean = log(number_of_babies_average_sum)/clutch3_age) %>% 
 	mutate(Temperature = as.factor(temperature)) %>% 
-	ungroup()
+	ungroup() %>% 
+	distinct(unique, .keep_all = TRUE)
 
 
 all7 <- left_join(all6, mass, by = c("temperature", "replicate"))
@@ -621,36 +622,77 @@ all6 %>%
 
 seldata <- all6 %>% 
 	distinct(unique, .keep_all = TRUE) %>%
-	rename(babies_per_time1 = babies_per_time) %>% 
-	rename(babies_per_time = r_mean) %>% 
-	select(temperature, unique, mass, babies_per_time, babies_per_time1) %>% 
+	select(temperature, unique, mass, babies_per_time, clutch1_age, number_of_babies_mean) %>% 
 	filter(!is.na(babies_per_time))
 
 
 seldata %>% 
-	ggplot(aes(x = mass, y = r_mean, group = temperature, color = factor(temperature))) + geom_point() +
+	# filter(clutch1_age < 40) %>% 
+	ggplot(aes(x = clutch1_age, y = babies_per_time, color = factor(temperature), group = factor(temperature))) + geom_point() +
+	geom_smooth(method = "lm") + ylab("Intrinsic rate of increase") + xlab("Generation time") + 
+	theme_bw()
+	
+### could calculate the selection differential for generation time, to figure out the strength of selection on
+### generation time. 
+
+seldata %>% 
+	ggplot(aes(x = mass, y = babies_per_time, group = temperature, color = factor(temperature))) + geom_point() +
 	geom_smooth(method = "lm")
 	
 
 sel_summ_all <- seldata %>% 
-	summarise_each(funs(mean, sd), mass, babies_per_time) 
+	summarise_each(funs(mean, sd), mass, babies_per_time, clutch1_age, number_of_babies_mean) 
 
 sel_summ <- seldata %>% 
 	distinct(unique, .keep_all = TRUE) %>% 
 	group_by(temperature) %>% 
-	summarise_each(funs(mean, sd), mass, babies_per_time) %>% 
+	summarise_each(funs(mean, sd), mass, babies_per_time, clutch1_age, number_of_babies_mean) %>% 
 	ungroup()
 
-seldata %>% 
-	mutate(std_mass = (mass - sel_summ$mass_mean[[1]])/sel_summ$mass_sd[[1]]) %>% 
-	mutate(relative_fitness = babies_per_time/sel_summ$babies_per_time_mean[[1]]) %>% 
+mod1 <- seldata %>% 
+	filter(clutch1_age < 40) %>% 
+	# filter(temperature < 27) %>% 
+	mutate(std_mass = (mass - sel_summ_all$mass_mean[[1]])/sel_summ_all$mass_sd[[1]]) %>% 
+	mutate(std_gen = (clutch1_age - sel_summ_all$clutch1_age_mean[[1]])/sel_summ_all$clutch1_age_sd[[1]]) %>%
+	mutate(std_babies = (number_of_babies_mean - sel_summ_all$number_of_babies_mean_mean[[1]])/sel_summ_all$number_of_babies_mean_sd[[1]]) %>%
+	mutate(relative_fitness = babies_per_time/sel_summ_all$babies_per_time_mean[[1]]) %>% 
 	distinct(relative_fitness, .keep_all = TRUE) %>% 
-	lm(relative_fitness ~ std_mass, data = .) %>% 
+	lm(relative_fitness ~ std_mass + std_gen + std_babies + temperature, data = .) %>% 
 	# do(tidy(lm(babies_per_time ~ mass + temperature, data = .), conf.int = TRUE)) %>% View
 	summary()
 	
+library(visreg)
+visreg(mod1)
 
-	
+
+seldata %>% 
+	# filter(clutch1_age < 40) %>% 
+	# filter(temperature < 27) %>% 
+	mutate(std_mass = (mass - sel_summ_all$mass_mean[[1]])/sel_summ_all$mass_sd[[1]]) %>% 
+	mutate(std_gen = (clutch1_age - sel_summ_all$clutch1_age_mean[[1]])/sel_summ_all$clutch1_age_sd[[1]]) %>%
+	mutate(std_babies = (number_of_babies_mean - sel_summ_all$number_of_babies_mean_mean[[1]])/sel_summ_all$number_of_babies_mean_sd[[1]]) %>%
+	mutate(relative_fitness = babies_per_time/sel_summ_all$babies_per_time_mean[[1]]) %>% 
+	distinct(relative_fitness, .keep_all = TRUE) %>% 
+	do(tidy(lm(relative_fitness ~ std_mass + std_gen + std_babies + temperature, data = .), conf.int = TRUE)) %>% 
+	filter(term != "(Intercept)") %>% 
+	mutate(term = str_replace(term, "std_babies", "Fecundity")) %>% 
+	mutate(term = str_replace(term, "std_mass", "Body mass")) %>% 
+	mutate(term = str_replace(term, "std_gen", "Generation time")) %>% 
+	mutate(term = str_replace(term, "temperature", "Temperature")) %>% 
+	ggplot(aes(x = term, y = estimate)) + geom_point(size = 2) +
+	geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.1) +
+	theme_bw() + geom_hline(yintercept = 0) +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) + ylab("Linear selection gradient") +
+	xlab("Trait") 
+ggsave("figures/linear_selection_gradient.png", width = 6, height = 3)
+
+
+
+
 seldata %>% 
 	distinct(mass, .keep_all = TRUE) %>%
 	mutate(std_mass = (mass - sel_summ_all$mass_mean[[1]])/sel_summ_all$mass_sd[[1]]) %>% 
@@ -689,7 +731,13 @@ sel_std <- seldata %>%
 	mutate(std_mass = ifelse(temperature == 16, ((mass - sel_summ$mass_mean[sel_summ$temperature == 16])/sel_summ$mass_sd[sel_summ$temperature == 16]), std_mass)) %>% 
 	mutate(std_mass = ifelse(temperature == 20, ((mass - sel_summ$mass_mean[sel_summ$temperature == 20])/sel_summ$mass_sd[sel_summ$temperature == 20]), std_mass)) %>% 
 	mutate(std_mass = ifelse(temperature == 24, ((mass - sel_summ$mass_mean[sel_summ$temperature == 24])/sel_summ$mass_sd[sel_summ$temperature == 24]), std_mass)) %>% 
-	mutate(std_mass = ifelse(temperature == 27, ((mass - sel_summ$mass_mean[sel_summ$temperature == 27])/sel_summ$mass_sd[sel_summ$temperature == 27]), std_mass)) %>% 
+	mutate(std_mass = ifelse(temperature == 27, ((mass - sel_summ$mass_mean[sel_summ$temperature == 27])/sel_summ$mass_sd[sel_summ$temperature == 27]), std_mass)) %>%
+	mutate(std_gen = NA) %>% 
+	mutate(std_gen = ifelse(temperature == 10, ((clutch1_age - sel_summ$clutch1_age_mean[sel_summ$temperature == 10])/sel_summ$clutch1_age_sd[sel_summ$temperature == 10]), std_gen)) %>% 
+	mutate(std_gen = ifelse(temperature == 16, ((clutch1_age - sel_summ$clutch1_age_mean[sel_summ$temperature == 16])/sel_summ$clutch1_age_sd[sel_summ$temperature == 16]), std_gen)) %>% 
+	mutate(std_gen = ifelse(temperature == 20, ((clutch1_age - sel_summ$clutch1_age_mean[sel_summ$temperature == 20])/sel_summ$clutch1_age_sd[sel_summ$temperature == 20]), std_gen)) %>% 
+	mutate(std_gen = ifelse(temperature == 24, ((clutch1_age - sel_summ$clutch1_age_mean[sel_summ$temperature == 24])/sel_summ$clutch1_age_sd[sel_summ$temperature == 24]), std_gen)) %>% 
+	mutate(std_gen = ifelse(temperature == 27, ((clutch1_age - sel_summ$clutch1_age_mean[sel_summ$temperature == 27])/sel_summ$clutch1_age_sd[sel_summ$temperature == 27]), std_gen)) %>% 
 	mutate(rel_fitness = NA) %>% 
 	mutate(rel_fitness = ifelse(temperature == 10, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 10], rel_fitness)) %>% 
 	mutate(rel_fitness = ifelse(temperature == 16, babies_per_time/sel_summ$babies_per_time_mean[sel_summ$temperature == 16], rel_fitness)) %>% 
@@ -722,7 +770,49 @@ sel_std %>%
 ggsave("figures/fitness_functions.png", width = 8, height = 5)
 ggsave("figures/fitness_functions_color.png", width = 8, height = 5)
 
+
 sel_std %>% 
+	filter(temperature != 27) %>%
+	group_by(temperature) %>% 
+	do(tidy(lm(rel_fitness ~ std_gen + std_mass, data = .), conf.int = TRUE)) %>% 
+View
+
+sel_std %>% 
+	filter(temperature != 27) %>% 
+	lm(rel_fitness ~ std_gen + std_mass + temperature, data =.) %>% 
+summary()
+
+
+sel_std %>% 
+	filter(temperature != 27) %>% 
+	distinct(rel_fitness, .keep_all = TRUE) %>% 
+	mutate(temperature = ifelse(temperature == "10", "10°C", temperature)) %>% 
+	mutate(temperature = ifelse(temperature == "16", "16°C", temperature)) %>% 
+	mutate(temperature = ifelse(temperature == "20", "20°C", temperature)) %>% 
+	mutate(temperature = ifelse(temperature == "24", "24°C", temperature)) %>% 
+	mutate(temperature = ifelse(temperature == "27", "27°C", temperature)) %>% 
+	ggplot(aes(x = std_gen, y = rel_fitness, color = temperature)) + geom_point(size = 2) + 
+	geom_smooth(method = "lm", color= "black") +
+	# facet_wrap( ~ temperature) +
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+				panel.background = element_blank(),
+				axis.line = element_line(color="black"), 
+				panel.border = element_rect(colour = "black", fill=NA, size=1))+
+	theme(text = element_text(size=16, family = "Helvetica")) +
+	ylab("Relative fitness") + xlab("Generation time (standardized)") +
+	theme(strip.background = element_rect(colour="white", fill="white")) +
+	scale_color_viridis(discrete = TRUE) + scale_fill_viridis(discrete = TRUE) 
+
+sel_std %>% 
+	distinct(rel_fitness, .keep_all = TRUE) %>% 
+	filter(temperature != 27) %>% 
+	group_by(temperature) %>% 
+	do(tidy(lm(rel_fitness ~ std_gen, data = .), conf.int = TRUE)) %>% View
+
+
+
+sel_std %>% 
+	# filter(temperature != 27) %>% 
 	distinct(rel_fitness, .keep_all = TRUE) %>% 
 	group_by(temperature) %>% 
 	do(tidy(lm(rel_fitness ~ std_mass, data = .), conf.int = TRUE)) %>% 
