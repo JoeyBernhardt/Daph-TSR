@@ -587,23 +587,32 @@ all3 <- all2 %>%
 
 all3 <- read_csv("data-processed/von_bert_mass.csv")
 
-prediction <- function(x) -0.69*x -4.3
-trade_off_plot <- all3 %>% 
+prediction <- function(x) -0.60*x -4.26
+prediction1 <- function(x) -0.90*x -5.36
+prediction2 <- function(x) -0.45*x -3.72
+
+ 
+	
+trade_off_plot <-	all3 %>% 
 	mutate(`T (°C)` = as.factor(temperature)) %>% 
 	ggplot(aes(x = log(K), y = log(linf_mass), color = `T (°C)`)) + 
 	stat_function( fun = prediction, color = "black", linetype = "dashed") +
+	stat_function( fun = prediction1, color = "grey", linetype = "dashed") +
+	stat_function( fun = prediction2, color = "grey", linetype = "dashed") +
 	geom_point(size = 4) +
+	geom_point(size = 4, shape = 1, color = "black") +
 	geom_smooth(method = "lm", color = "black") + ylab("log(asymptotic body mass)") + xlab("log(growth constant k, per day)") +
 	theme_bw() +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1))+
-	theme(text = element_text(size=16, family = "Helvetica")) + scale_color_viridis(discrete = TRUE) +
+	theme(text = element_text(size=16, family = "Helvetica")) + scale_color_viridis(discrete = TRUE, option = "magma") +
+		ylim(-3.7, -1.9) +
 	# stat_function( fun = prediction, color = "black", linetype = "dashed") +
 	annotate("text", label = "Predicted slope = -0.69; CIs (-0.99, -0.53)\n Observed slope = -0.59; CIs (-0.76, -0.46)", x = -2.5, y = -3.6, size = 5)
 	
-ggsave("figures/winter_trade_off.pdf", width = 8, height = 5)
+	ggsave("figures/winter_trade_off.pdf", width = 8, height = 5)
 ggsave("figures/winter_trade_off.png", width = 8, height = 5)
 
 
@@ -646,27 +655,28 @@ all3 %>%
 
 prediction_l <- function(x) 0.21*x -23.2
 
-# inverse_plot <- 
-prediction_t <- function(x) 0.46*x -21.3	
-prediction_l <- function(x) 0.21*x -11.05
-prediction_h <- function(x) 0.92*x -40.18
-	all3 %>% 
+
+prediction_t <- function(x) 0.42*x -19.67
+prediction_l <- function(x) 0.17*x -9.43
+prediction_h <- function(x) 0.88*x -38.53
+prediction_o <- function(x) 0.2647*x -13.25
+inverse_plot <- all3 %>% 
 	filter(Linf < 4000) %>% 
 	mutate(`Log(k)` = log(K)) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	ggplot(aes(x = inverse_temp, y = log(linf_mass), color = `Log(k)`)) + geom_point(size = 4) +
-	stat_function( fun = prediction_t, color = "grey", linetype = "dashed") +
+	stat_function( fun = prediction_t, color = "black", linetype = "dashed") +
 	stat_function( fun = prediction_l, color = "grey", linetype = "dashed") +
 	stat_function( fun = prediction_h, color = "grey", linetype = "dashed") +
 	geom_smooth(method = "lm", color = "black") + 
 	theme_bw() +
+	geom_point(size = 4, shape = 1, color = "black") +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 				panel.background = element_blank(),
 				axis.line = element_line(color="black"), 
 				panel.border = element_rect(colour = "black", fill=NA, size=1)) +
-	theme(text = element_text(size=16, family = "Helvetica")) + scale_color_viridis(discrete = TRUE) +
+	theme(text = element_text(size=16, family = "Helvetica")) + scale_color_viridis(option = "inferno") +
 	scale_x_reverse() +
-	scale_color_viridis() +
 	ylim(-3.6, -2) +
 	annotate("text", label = "Predicted slope = -0.46; CIs(-0.21, -0.92)\n Observed slope = -0.30; CIs (-0.46, -0.14)", x = 40, y = -3.5, size = 5) +
 	ylab("log (asymptotic body mass)") + xlab("Temperature (1/kT)")
