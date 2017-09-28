@@ -643,13 +643,21 @@ all3 %>%
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	do(tidy(lm(log(linf_mass) ~ inverse_temp, data = .), conf.int = TRUE)) %>% View
 
-prediction_t <- function(x) 0.46*x -21.2
-inverse_plot <- all3 %>% 
+
+prediction_l <- function(x) 0.21*x -23.2
+
+# inverse_plot <- 
+prediction_t <- function(x) 0.46*x -21.3	
+prediction_l <- function(x) 0.21*x -11.05
+prediction_h <- function(x) 0.92*x -40.18
+	all3 %>% 
 	filter(Linf < 4000) %>% 
 	mutate(`Log(k)` = log(K)) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	ggplot(aes(x = inverse_temp, y = log(linf_mass), color = `Log(k)`)) + geom_point(size = 4) +
-	stat_function( fun = prediction_t, color = "black", linetype = "dashed") +
+	stat_function( fun = prediction_t, color = "grey", linetype = "dashed") +
+	stat_function( fun = prediction_l, color = "grey", linetype = "dashed") +
+	stat_function( fun = prediction_h, color = "grey", linetype = "dashed") +
 	geom_smooth(method = "lm", color = "black") + 
 	theme_bw() +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
