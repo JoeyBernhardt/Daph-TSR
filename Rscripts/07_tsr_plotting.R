@@ -590,6 +590,13 @@ all3 <- all2 %>%
 
 all3 <- read_csv("data-processed/von_bert_mass.csv")
 
+all3 %>% 
+	lm(log(K) ~ log(linf_mass), data = .) %>% summary()
+
+
+all3 %>% 
+	ggplot(aes(y = log(K), x = log(linf_mass))) + geom_point() + geom_smooth(method = "lm")
+
 prediction <- function(x) -0.60*x -4.26
 prediction1 <- function(x) -0.90*x -5.36
 prediction2 <- function(x) -0.45*x -3.72
