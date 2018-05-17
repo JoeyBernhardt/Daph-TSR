@@ -27,12 +27,15 @@ size2 <- clean_names(size) %>%
 	filter(!is.na(size_um))
 
 
+(1/(39.0*.00008617)) - 273.15
+
 size2 %>% 
 	filter(actual_size_um > 0) %>% 
 	filter(stage != "neonate") %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	mutate(mass =  0.00402*((actual_size_um/1000)^2.66)) %>% 
 	mutate(log_mass =  log(mass)) %>% 
+	select(inverse_temp, temperature, everything()) %>% View
 	mutate(stage = ifelse(stage == "clutch1", "A) Size at clutch 1", stage)) %>% 
 	mutate(stage = ifelse(stage == "clutch2", "B) Size at clutch 2", stage)) %>% 
 	mutate(stage = ifelse(stage == "clutch3", "C) Size at clutch 3", stage)) %>% 

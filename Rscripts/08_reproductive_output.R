@@ -264,6 +264,13 @@ w_babies_size %>%
 ggsave("figures/clutch_size_mass.pdf")
 ggsave("figures/clutch_size_mass.png")
 
+w_babies_size %>% 
+	# filter(stage == "clutch3") %>% 
+	mutate(mass =  0.00402*((size_um/1000)^2.66)) %>% 
+	lm(number_of_babies ~ mass +temperature, data = .) %>% 
+	tidy(., conf.int = TRUE)
+
+
 mass <- read_csv("data-processed/von_bert_mass.csv")
 all_growth <- read_csv("data-processed/all_growth.csv")
 
