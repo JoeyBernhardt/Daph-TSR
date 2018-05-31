@@ -37,17 +37,28 @@ ls3 %>%
 
 
 ls3 %>% 
+	filter(temperature > 10) %>%
 	ggplot(aes(x = log(mass), y = log(days_to_clutch1*(mass^0.25)))) + geom_point() +
-	geom_smooth(method = "lm", color = "black") + ylab("Generation time (days)") + xlab("ln(Mass)")
+	geom_smooth(method = "lm", color = "black") + ylab("ln(Generation time) (days)") + xlab("ln(Mass)")
 
 ls3 %>% 
+	filter(temperature > 10) %>%
+	ggplot(aes(x = log(mass), y = log(lifespan_calc*(mass^0.25)))) + geom_point() +
+	geom_smooth(method = "lm", color = "black") + ylab("ln(Generation time) (days)") + xlab("ln(Mass)")
+
+
+ls3 %>% 
+	filter(temperature > 10) %>% 
 	filter(!is.na(days_to_clutch1)) %>% 
-	ggplot(aes(x = inv_temp, y = log(days_to_clutch1*(mass^0.25)))) + geom_jitter(width = 0.1) +
-	geom_smooth(method = "lm", color = "black") + ylab("ln(Generation time) (days)") + xlab("Temperature") +
+	ggplot(aes(x = inv_temp, y = log(lifespan_calc*(mass^0.25)))) + geom_jitter(width = 0.1) +
+	geom_smooth(method = "lm", color = "black") + ylab("ln(Lifespan) (days)") + xlab("Temperature") +
 	scale_x_reverse()
 
+
+### generation time
 ls3 %>% 
 	filter(!is.na(days_to_clutch1)) %>% 
+	filter(temperature > 10) %>% 
 	ggplot(aes(x = inv_temp, y = log(days_to_clutch1))) + geom_jitter(width = 0.1) +
 	geom_smooth(method = "lm", color = "black") + ylab("ln(Generation time) (days)") + xlab("Temperature") +
 	scale_x_reverse()
@@ -58,10 +69,61 @@ ls3 %>%
 	lm(log(lifespan_calc) ~ log(max_body_size), data = .) %>% summary()
 
 ls3 %>% 
-	lm(log(lifespan_calc) ~ log(mass^(1/4)), data = .) %>% summary()
+	filter(temperature > 10) %>% 
+	lm(log(lifespan_calc) ~ log(mass), data = .) %>% tidy(conf.int = TRUE)
 
 ls3 %>% 
+	filter(temperature > 10) %>% 
+	lm(log(lifespan_calc) ~ inv_temp, data = .) %>% tidy(conf.int = TRUE)
+
+ls4 <- ls3 %>% 
+	mutate(temp_kelvin = temperature + 273.15) %>%
+	mutate(temp_corr_lifespan = lifespan_calc*(exp((0.51/0.00008617)*((1/temp_kelvin)-(1/293.15))))) %>% 
+	mutate(temp_corr_gen = days_to_clutch1*(exp((0.51/0.00008617)*((1/temp_kelvin)-(1/293.15)))))
+
+### somehow figure out how to get generation time corrected to 20C
+ls4 %>% 
+	filter(temperature > 10) %>% 
+	lm(log(temp_corr_lifespan) ~ log(mass), data = .) %>% tidy(conf.int = TRUE)
+
+
+ls4 %>% 
+	filter(temperature > 10) %>% 
+	filter(!is.na(days_to_clutch1)) %>% 
+	ggplot(aes(x = log(mass), y = log(temp_corr_lifespan))) + geom_jitter(width = 0.1) +
+	geom_smooth(method = "lm", color = "black") + ylab("ln(Lifespan) (days)") + xlab("ln(Mass)") +
+	scale_x_reverse()
+
+ls4 %>% 
+	filter(temperature > 10) %>% 
+	filter(!is.na(days_to_clutch1)) %>% 
+	ggplot(aes(x = log(mass), y = log(temp_corr_gen))) + geom_jitter(width = 0.1) +
+	geom_smooth(method = "lm", color = "black") + ylab("ln(Lifespan) (days)") + xlab("ln(Mass)") +
+	scale_x_reverse()
+
+
+ls3 %>% 
+	filter(temperature > 10) %>% 
 	lm(log(days_to_clutch1) ~ inv_temp, data = .) %>% summary()
 
 ls3 %>% 
+	filter(temperature > 10) %>% 
 	lm(log(days_to_clutch1) ~ inv_temp, data = .) %>% tidy(conf.int = TRUE)
+
+## get total clutches per lifetime
+
+total_clutches <- ls3 %>% 
+	filter(!is.na(days_to_clutch1)) %>% 
+	gather(starts_with("clutch"), key = "clutch_number", value = "clutch_date") %>% 
+	filter(!is.na(clutch_date)) %>% 
+	group_by(temperature, replicate) %>% 
+	distinct(clutch_number) %>% 
+	tally()
+
+
+## total clutches over lifetime
+total_clutches %>% 
+	filter(temperature > 10) %>% 
+	ungroup() %>% 
+	ggplot(aes(x  = temperature, y = n)) + geom_point() + 
+	geom_smooth(method = "lm")
