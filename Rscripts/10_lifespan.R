@@ -164,7 +164,12 @@ ls5 %>%
 ls5 %>% 
 	filter(temperature > 10) %>% 
 	mutate(clutches_per_time = n/lifespan_calc) %>%
-	lm(log(lifespan_calc) ~ inv_temp, data = .) %>% tidy(conf.int = TRUE)
+	lm(n ~ temperature, data = .) %>% tidy(conf.int = TRUE)
+
+ls5 %>% 
+	filter(temperature > 10) %>% 
+	mutate(clutches_per_time = n/lifespan_calc) %>%
+	lm(log(lifespan_calc*mass^0.25) ~ inv_temp, data = .) %>% tidy(conf.int = TRUE)
 
 
 ls5 %>% 
@@ -173,3 +178,41 @@ ls5 %>%
 	ggplot(aes(x = inv_temp, y = log(lifespan_calc))) + geom_point() + scale_x_reverse() +
 	geom_smooth(method = "lm", color = "black") + ylab("ln(Lifespan) (days)") + xlab("Temperature (1/kT)")
 ggsave("figures/lifespan_v_temp.pdf", width = 6, height = 4)
+
+
+
+### now bring in the clutch sizes
+
+ls_clutches <- read_csv("data-raw/lifespan-clutches.csv")
+
+
+ls_clutch_sum <- ls_clutches %>% 
+	group_by(temperature, replicate) %>% 
+	filter(!is.na(baby_count)) %>% 
+	summarise_each(funs(mean), baby_count)
+
+ls_clutch_sum %>% 
+	ungroup() %>% 
+	ggplot(aes(x = temperature, y = baby_count)) + geom_point() +
+	geom_smooth()
+
+
+ls_clutch_sum %>% 
+	ungroup() %>% 
+	ggplot(aes(x = temperature, y = baby_count)) + geom_point() +
+	geom_smooth()
+
+ls_clutches %>% 
+	ggplot(aes(x = temperature, y = baby_count, color = clutch_number)) + geom_point(size = 3) + geom_smooth(method = "lm", color = "black") +
+	ylab("Offspring per clutch") + xlab("Temperature (°C)") + scale_color_viridis_c()
+ggsave("figures/lifespan_offspring_per_clutch.pdf", width = 7, height = 5)
+
+lm(baby_count ~ temperature, data = ls_clutches) %>% tidy(conf.int = TRUE)
+
+
+ls_clutches %>% 
+	gather(5:8, key = clutch, value = baby_size) %>% 
+	ggplot(aes(x = temperature, y = baby_size, color = clutch)) + geom_jitter(width = 0.2, size = 2) + scale_color_viridis_d() +
+	ylab("Offspring size (um)") + xlab("Temperature (°C)")
+ggsave("figures/lifespan_offspring_size.pdf", width = 7, height = 5)
+
