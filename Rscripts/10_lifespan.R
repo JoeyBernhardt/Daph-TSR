@@ -174,6 +174,13 @@ ls5 %>%
 
 ls5 %>% 
 	filter(temperature > 10) %>% 
+	ggplot(aes(x = temperature, y = mass)) + geom_point() +
+	ylab("Body mass at death (mg)") + xlab("Temperature (°C)")
+ggsave("figures/lifespan_size_at_death.png", width = 7, height = 5)
+	
+
+ls5 %>% 
+	filter(temperature > 10) %>% 
 	mutate(clutches_per_time = n/lifespan_calc) %>% 
 	ggplot(aes(x = inv_temp, y = log(lifespan_calc))) + geom_point() + scale_x_reverse() +
 	geom_smooth(method = "lm", color = "black") + ylab("ln(Lifespan) (days)") + xlab("Temperature (1/kT)")
