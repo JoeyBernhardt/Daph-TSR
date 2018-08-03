@@ -35,6 +35,8 @@ acc %>%
 	geom_smooth(method = "lm") +
 	facet_wrap( ~ stage)
 
+ggsave("figures/acclimated_daphnia_clutches_time.pdf", width = 7, height = 5)
+
 
 ## make an age column
 
