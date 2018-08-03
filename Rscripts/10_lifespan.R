@@ -66,7 +66,13 @@ ls3 %>%
 ggsave("figures/generationtime_v_temp.pdf", width = 6, height = 4)
 
 
-
+ls3 %>% 
+	filter(!is.na(days_to_clutch1)) %>% 
+	# filter(temperature > 12) %>% 
+	ggplot(aes(x = inv_temp, y = days_to_clutch1)) + geom_jitter(width = 0.01) +
+	geom_smooth(color = "black") +
+	ylab("Generation time (days)") + xlab("Temperature (1/kT)") +
+	scale_x_reverse()
 
 
 ls3 %>% 
