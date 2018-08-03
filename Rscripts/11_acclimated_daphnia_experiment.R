@@ -112,30 +112,43 @@ preds <- fits %>%
 select(info, unique_id, logLik, AIC, BIC, deviance, df.residual) %>% View
 
 new_preds <- ac_age %>%
-	do(., data.frame(age = seq(min(.$age), max(.$age), length.out = 150), stringsAsFactors = FALSE))
-
-max_min <- group_by(ac_age, unique_id) %>%
-	summarise(., min_age = min(age), max_age = max(age)) %>%
+	group_by(temperature, replicate, unique_id) %>% 
+	do(., data.frame(age = seq(min(.$age), max(.$age), length.out = 100), stringsAsFactors = FALSE)) %>% 
 	ungroup()
+
+max_min <- group_by(ac_age, temperature, replicate, unique_id) %>%
+	summarise(., min_age = min(age), max_age = max(age)) %>%
+	ungroup() 
+
+str(max_min)
 
 # create new predictions
 preds2 <- fits %>%
-	unnest(fit %>% map(augment, newdata = new_preds)) %>%
+	unnest(fit %>% map(augment, newdata = new_preds)) %>% 
+	filter(unique_id == unique_id1) %>% 
 	merge(., max_min, by = 'unique_id') %>% 
-	group_by(., unique_id) %>% 
-	filter(., age > unique(min_age) & age < unique(max_age)) %>%
-	rename(., size_um = .fitted) %>%
+	group_by(unique_id) %>% 
+	filter(age > unique(min_age) & age < unique(max_age)) %>%
+	rename(size_um = .fitted) %>%
 	ungroup()
 
+?augment
+
 ggplot() +
-	geom_point(aes(x = age, y = size_um, group = unique_id, color = temperature), size = 2, ac_age) +
-	geom_line(aes(x= age, y = size_um, group = unique_id, color = temperature), alpha = 0.5, preds2) +
+	geom_point(aes(x = age, y = size_um, group = unique_id, color = factor(temperature)),
+						 size = 2, data = ac_age) +
+	geom_line(aes(x= age, y = size_um, group = factor(unique_id1), color = factor(temperature.x)), data = preds2) +
 	facet_wrap(~ temperature + replicate, labeller = labeller(.multi_line = FALSE)) +
 	# scale_colour_manual(values = c('green4', 'black')) +
 	theme_bw(base_size = 12, base_family = 'Helvetica') +
 	ylab('Size') +
 	xlab('Age') +
 	theme(legend.position = c(0.9, 0.15))
+
+preds2 %>% 
+	filter(unique_id == "10_1") %>% 
+	ungroup() %>% 
+	ggplot(aes(x = age, y = size_um, group = unique_id)) + geom_point()
 
 
 ggplot(params) +
@@ -156,6 +169,14 @@ params %>%
 	facet_wrap(~ term, scales = "free")
 
 
+
+params %>% 
+	separate(unique_id, into = c("temperature", "replicate"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(term == "Linf") %>% 
+	ggplot(aes(x = temperature, y = estimate)) + geom_point() +
+	geom_smooth(method = "lm")
+	
 
 
 ac_age %>% 
