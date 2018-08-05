@@ -50,11 +50,49 @@ ac_age <- acc %>%
 
 ### ok take out the lines where daphnia are declining in size?
 ac_age %>% 
-	filter(temperature == 16) %>% 
+	filter(temperature == 27, replicate == 8) %>% View
 	ggplot(aes(x = age, y = size_um, color = factor(replicate), group = replicate)) + geom_point() +
 	facet_wrap( ~ temperature) +  geom_line() +
 	ylab("Size (um)") + xlab("Date")
 
+ac_age2 <- ac_age %>% 
+	mutate(keep = NA) %>% 
+	# filter(temperature == 16) %>% 
+	mutate(keep = case_when(temperature == 16 & replicate == 2 & date_measured < ymd("2017-08-27") ~ "yes",
+													temperature == 16 & replicate == 2 & date_measured > ymd("2017-08-27") ~ "no",
+													temperature == 16 & replicate == 3 & date_measured < ymd("2017-08-31") ~ "yes",
+													temperature == 16 & replicate == 3 & date_measured > ymd("2017-08-31") ~ "no",
+													temperature == 16 & replicate == 7 & date_measured < ymd("2017-09-04") ~ "yes",
+													temperature == 16 & replicate == 7 & date_measured > ymd("2017-09-04")~ "no",
+													temperature == 16 & replicate == 8 & date_measured < ymd("2017-08-30") ~ "yes",
+													temperature == 16 & replicate == 8 & date_measured > ymd("2017-08-30") ~ "no",
+													temperature == 16 & replicate == 5 & date_measured < ymd("2017-09-30") ~ "yes",
+													temperature == 16 & replicate == 5 & date_measured > ymd("2017-09-30") ~ "no",
+													temperature == 16 & replicate == 6 & date_measured < ymd("2017-09-30") ~ "yes",
+													temperature == 16 & replicate == 6 & date_measured > ymd("2017-09-30") ~ "no",
+													temperature == 24 & replicate == 2 & date_measured < ymd("2017-08-15") ~ "yes",
+													temperature == 24 & replicate == 2 & date_measured > ymd("2017-08-15") ~ "no",
+													temperature == 24 & replicate == 3 & date_measured < ymd("2017-08-16") ~ "yes",
+													temperature == 24 & replicate == 3 & date_measured > ymd("2017-08-16") ~ "no",
+													temperature == 24 & replicate == 4 & date_measured < ymd("2017-08-07") ~ "yes",
+													temperature == 24 & replicate == 4 & date_measured > ymd("2017-08-07") ~ "no",
+													temperature == 24 & replicate == 7 & date_measured < ymd("2017-09-04") ~ "yes",
+													temperature == 24 & replicate == 7 & date_measured > ymd("2017-09-04") ~ "no",
+													temperature == 24 & replicate == 8 & date_measured < ymd("2017-09-04") ~ "yes",
+													temperature == 24 & replicate == 8 & date_measured > ymd("2017-09-04") ~ "no",
+													temperature == 27 & replicate == 4 & date_measured < ymd("2017-08-11") ~ "yes",
+													temperature == 27 & replicate == 4 & date_measured > ymd("2017-08-11") ~ "no",
+													temperature == 27 & replicate == 6 & date_measured < ymd("2017-09-06") ~ "yes",
+													temperature == 27 & replicate == 6 & date_measured > ymd("2017-09-06") ~ "no",
+													temperature == 24 & replicate == 7 & date_measured < ymd("2017-08-08") ~ "yes",
+													temperature == 24 & replicate == 7 & date_measured > ymd("2017-08-08") ~ "no")) %>% 
+	# filter(temperature == 16) %>%
+	filter(keep %in% c(NA, "yes"))
+
+ac_age2 %>% 
+	ggplot(aes(x = date_measured, y = size_um, color = replicate, group = replicate)) + geom_point() +
+	facet_wrap( ~ temperature) + scale_color_viridis() + geom_line() +
+	ylab("Size (um)") + xlab("Date")
 
 ## now get asymptotic mass
 
@@ -86,7 +124,7 @@ fit
 
 
 
-fits <- ac_age %>% 
+fits <- ac_age2 %>% 
 	group_by(unique_id) %>%
 	nest() %>% 
 	mutate(fit = purrr:::map(data, ~ nls_multstart(size_um ~ vbT(age, Linf, K, t0),
@@ -115,6 +153,7 @@ CI <- fits %>%
 
 
 params <- merge(params, CI, by = intersect(names(params), names(CI)))
+write_csv(params, "data-processed/acc_daph_vb_params.csv")
 
 # get predictions
 preds <- fits %>%
@@ -122,12 +161,12 @@ preds <- fits %>%
 
 select(info, unique_id, logLik, AIC, BIC, deviance, df.residual) %>% View
 
-new_preds <- ac_age %>%
+new_preds <- ac_age2 %>%
 	group_by(temperature, replicate, unique_id) %>% 
 	do(., data.frame(age = seq(min(.$age), max(.$age), length.out = 100), stringsAsFactors = FALSE)) %>% 
 	ungroup()
 
-max_min <- group_by(ac_age, temperature, replicate, unique_id) %>%
+max_min <- group_by(ac_age2, temperature, replicate, unique_id) %>%
 	summarise(., min_age = min(age), max_age = max(age)) %>%
 	ungroup() 
 
@@ -146,15 +185,16 @@ preds2 <- fits %>%
 ?augment
 
 ggplot() +
-	geom_point(aes(x = age, y = size_um, group = unique_id, color = factor(temperature)),
+	geom_point(aes(x = age, y = size_um, group = unique_id, color = factor(unique_id)),
 						 size = 2, data = ac_age) +
-	geom_line(aes(x= age, y = size_um, group = factor(unique_id1), color = factor(temperature.x)), data = preds2) +
-	facet_wrap(~ temperature + replicate, labeller = labeller(.multi_line = FALSE)) +
+	geom_line(aes(x= age, y = size_um, group = factor(unique_id1), color = factor(unique_id)), data = preds2) +
+	# facet_wrap(~ temperature + replicate, labeller = labeller(.multi_line = FALSE)) +
 	# scale_colour_manual(values = c('green4', 'black')) +
 	theme_bw(base_size = 12, base_family = 'Helvetica') +
 	ylab('Size') +
 	xlab('Age') +
-	theme(legend.position = c(0.9, 0.15))
+	theme(legend.position = c(0.9, 0.15)) 
+ggsave("figures/acc_vb_fits.pdf", width = 20, height = 20)
 
 preds2 %>% 
 	filter(unique_id == "10_1") %>% 
