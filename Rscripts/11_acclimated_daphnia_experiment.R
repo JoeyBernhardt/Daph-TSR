@@ -48,6 +48,12 @@ ac_age <- acc %>%
 	filter(!is.na(age)) %>% 
 	unite(unique_id, temperature, replicate, remove = FALSE)
 
+### ok take out the lines where daphnia are declining in size?
+ac_age %>% 
+	filter(temperature == 16) %>% 
+	ggplot(aes(x = age, y = size_um, color = factor(replicate), group = replicate)) + geom_point() +
+	facet_wrap( ~ temperature) +  geom_line() +
+	ylab("Size (um)") + xlab("Date")
 
 
 ## now get asymptotic mass
@@ -75,6 +81,9 @@ fit <- nls_multstart(size_um ~ vbT(age, Linf, K, t0),
 										 lower = c(Linf = 100, K = 0, t0 = -15))
 
 fit
+
+
+
 
 
 fits <- ac_age %>% 
