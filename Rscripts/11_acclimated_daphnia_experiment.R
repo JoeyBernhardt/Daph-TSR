@@ -32,7 +32,7 @@ acc %>%
 	mutate(mass =  0.00402*((size_um/1000)^2.66)) %>% 
 	filter(stage %in% c("clutch1","clutch2", "clutch3", "clutch4", "clutch5", "clutch6")) %>% 
 	ggplot(aes(x = temperature, y = mass)) + geom_point() + 
-	geom_smooth(method = "lm") +
+	geom_smooth(method = "lm", color = "black") +
 	facet_wrap( ~ stage)
 
 ggsave("figures/acclimated_daphnia_clutches_time.pdf", width = 7, height = 5)
@@ -226,9 +226,17 @@ params %>%
 	mutate(temperature = as.numeric(temperature)) %>% 
 	filter(term == "Linf") %>% 
 	ggplot(aes(x = temperature, y = estimate)) + geom_point() +
-	geom_smooth(method = "lm")
+	geom_smooth(method = "lm", color = "black") +
+	ylab("Linf") + xlab("Temperature (°C)")
+ggsave("figures/linf_acc_daph.pdf", width = 6, height = 4)
 	
 
+params2 <- params %>% 
+	separate(unique_id, into = c("temperature", "replicate"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	filter(term == "Linf") 
+
+lm(estimate ~ temperature, data = params2) %>% summary()
 
 ac_age %>% 
 	group_by(replicate, temperature) %>% 
