@@ -137,8 +137,8 @@ fits <- ac_age2 %>%
 	mutate(fit = purrr:::map(data, ~ nls_multstart(size_um ~ vbT(age, Linf, K, t0),
 																							 data = .x,
 																							 iter = 500,
-																							 start_lower = c(Linf = 500, K = 0, t0 = -5),
-																							 start_upper = c(Linf = 1000, K = 0.5, t0 = 0),
+																							 start_lower = c(Linf = 500, K = 0, t0 = -15),
+																							 start_upper = c(Linf = 3000, K = 1, t0 = 0),
 																							 supp_errors = 'Y',
 																							 na.action = na.omit,
 																							 lower = c(Linf = 100, K = 0, t0 = -15))))
@@ -244,18 +244,8 @@ params2 <- params %>%
 	mutate(temperature = as.numeric(temperature)) %>% 
 	filter(term == "Linf") 
 
-lm(estimate ~ temperature, data = params2) %>% summary()
 
-ac_age %>% 
-	group_by(replicate, temperature) %>% 
-	do(tidy(nls.lm(size_um ~ vbT(age,Linf,K,t0), data=., start = start_list))) %>% View
-	mutate(temperature = 24)
 
-	?nls
-
-	mod <- nls(size_um~vbT(age,Linf,K,t0), data=ac_age, start = start_list)
-	summary(mod)
-	tidy(mod)
 ### now get the clutch sizes for the acclimated daphnia
 
 acc_clutch <- read_csv("data-raw/acclimated-daphnia-clutches.csv") 
@@ -264,3 +254,52 @@ acc_clutch %>%
 	filter(clutch_number < 7) %>% 
 	ggplot(aes(x = temperature, y = final_baby_count)) + geom_point() +
 	facet_wrap( ~ clutch_number, scales = "free") + geom_smooth()
+
+## now get production rate, i.e. babies per unit time.
+
+sizes <- ac_age2 %>% 
+	filter(stage %in% c("clutch1", "clutch2", "clutch3", "clutch4", "clutch5", "clutch6"))
+
+
+clutches <- acc_clutch %>% 
+	mutate(stage = case_when(clutch_number == 1 ~ "clutch1",
+													 clutch_number == 2 ~ "clutch2",
+													 clutch_number == 3 ~ "clutch3",
+													 clutch_number == 4 ~ "clutch4",
+													 clutch_number == 5 ~ "clutch5",
+													 clutch_number == 6 ~ "clutch6"))
+
+all_clutches <- left_join(sizes, clutches, by = c("temperature", "replicate", "stage"))
+
+
+ac2 <- all_clutches %>% 
+	filter(!is.na(final_baby_count)) %>% 
+	select(temperature, replicate, stage, final_baby_count, size_um, age) %>% 
+	group_by(temperature, replicate) %>% 
+	mutate(cumulative_babies = cumsum(final_baby_count)) %>% 
+	unite(unique_id, temperature, replicate, remove = FALSE)
+
+
+ac2 %>% 
+	ggplot(aes(x = age, y = cumulative_babies, group = unique_id, color = factor(temperature))) + geom_point() +
+	geom_line() + geom_smooth(method = "lm")
+
+### babies per unit time (reproductive output)
+
+ac2 %>% 
+	filter(!is.na(age)) %>% 
+	group_by(temperature, replicate) %>% 
+	do(tidy(lm(cumulative_babies ~ age, data= .), conf.int = TRUE)) %>% 
+	ggplot(aes(x = temperature, y = estimate)) + geom_point() +
+	facet_wrap( ~ term, scales = "free")
+
+ac2 %>% 
+	filter(!is.na(age)) %>% 
+	group_by(temperature, replicate) %>% 
+	do(tidy(lm(cumulative_babies ~ age, data= .), conf.int = TRUE)) %>% 
+	filter(term == "age") %>% 
+	ungroup() %>% 
+	ggplot(aes(x = temperature, y = estimate)) + geom_point() +
+	geom_smooth() +ylab("Reproductive rate (babies/day)") + xlab("Temperature (°C)") 
+ggsave("figures/reproductive-rate-acclimated-daphnia.pdf", width = 6, height = 4)
+	
