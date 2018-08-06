@@ -27,15 +27,21 @@ acc %>%
 	summarise_each(funs(max), size_um) %>% 
 	ggplot(aes(x = temperature, y = size_um)) + geom_point()
 
-
+## figure of size at stage
 acc %>% 
 	mutate(mass =  0.00402*((size_um/1000)^2.66)) %>% 
 	filter(stage %in% c("clutch1","clutch2", "clutch3", "clutch4", "clutch5", "clutch6")) %>% 
 	ggplot(aes(x = temperature, y = mass)) + geom_point() + 
 	geom_smooth(method = "lm", color = "black") +
-	facet_wrap( ~ stage)
+	facet_wrap( ~ stage) + ylab("Mass (mg)") + xlab("Temperature (°C)")
 
 ggsave("figures/acclimated_daphnia_clutches_time.pdf", width = 7, height = 5)
+
+acc %>% 
+	mutate(mass =  0.00402*((size_um/1000)^2.66)) %>% 
+	filter(stage %in% c("clutch1","clutch2", "clutch3", "clutch4", "clutch5", "clutch6")) %>% 
+	group_by(stage) %>% 
+	do(tidy(lm(mass ~ temperature, data = .), conf.int = TRUE)) %>%  View
 
 
 ## make an age column
@@ -90,6 +96,7 @@ ac_age2 <- ac_age %>%
 	filter(keep %in% c(NA, "yes"))
 
 ac_age2 %>% 
+	# filter(stage %in% c("clutch1","clutch2", "clutch3", "clutch4", "clutch5", "clutch6")) %>% 
 	ggplot(aes(x = date_measured, y = size_um, color = replicate, group = replicate)) + geom_point() +
 	facet_wrap( ~ temperature) + scale_color_viridis() + geom_line() +
 	ylab("Size (um)") + xlab("Date")
@@ -220,14 +227,15 @@ params %>%
 	facet_wrap(~ term, scales = "free")
 
 
-
+### Figure of asymptotic mass vs temperature
 params %>% 
 	separate(unique_id, into = c("temperature", "replicate"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
 	filter(term == "Linf") %>% 
-	ggplot(aes(x = temperature, y = estimate)) + geom_point() +
+	mutate(mass =  0.00402*((estimate/1000)^2.66)) %>% 
+	ggplot(aes(x = temperature, y = mass)) + geom_point() +
 	geom_smooth(method = "lm", color = "black") +
-	ylab("Linf") + xlab("Temperature (°C)")
+	ylab("Asymptotic mass") + xlab("Temperature (°C)")
 ggsave("figures/linf_acc_daph.pdf", width = 6, height = 4)
 	
 
