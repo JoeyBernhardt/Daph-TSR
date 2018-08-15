@@ -281,13 +281,17 @@ b_size %>%
 	mutate(lifetime_production = n*baby_mass) %>% 
 	ungroup() %>% 
 	ggplot(aes(x = temperature, y = baby_mass)) + geom_point() +
-	geom_smooth(method = "lm")
+	geom_smooth(method = "lm", color = "black") +
+	ylab("Mean offspring size (mg C)") + xlab("Temperature (°C)")
+ggsave("figures/mean_offspring_size_lifespan.pdf", width = 6, height = 5)
 
 b_size %>% 
 	mutate(lifetime_production = n*baby_mass) %>% 
 	ungroup() %>% 
 	ggplot(aes(x = temperature, y = lifetime_production)) + geom_point() +
-	geom_smooth(method = "lm")
+	geom_smooth(method = "lm", color = "black") + ylab("Lifetime production (mg C)") +
+	xlab("Temperature (°C)")
+ggsave("figures/lifetime_production.pdf", width = 6, height = 5)
 
 b_size %>% 
 	mutate(lifetime_production = n*baby_mass) %>% 
