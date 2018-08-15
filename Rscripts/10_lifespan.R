@@ -200,8 +200,8 @@ ls_clutches <- read_csv("data-raw/lifespan-clutches.csv")
 
 
 ls_clutch_sum <- ls_clutches %>% 
-	group_by(temperature, replicate) %>% 
 	filter(!is.na(baby_count)) %>% 
+	group_by(temperature, replicate) %>% 
 	summarise_each(funs(mean), baby_count)
 
 ls_clutch_sum %>% 
@@ -229,3 +229,74 @@ ls_clutches %>%
 	ylab("Offspring size (um)") + xlab("Temperature (°C)")
 ggsave("figures/lifespan_offspring_size.pdf", width = 7, height = 5)
 
+
+### now join the clutch sizes with the clutches
+
+all_clutches <- left_join(total_clutches, ls_clutch_sum)
+
+all_clutches %>% 
+	mutate(R0 = n*baby_count) %>% 
+	ungroup() %>% 
+	ggplot(aes(x = temperature, y = R0)) + geom_point() +
+	geom_smooth(color = "black") +
+	xlab("Temperature (°C)") + ylab("R0 (total babies per lifetime)")
+ggsave("figures/lifetime_reproductive_output.pdf", width = 6, height = 5)
+
+all_clutches %>% 
+	ggplot(aes(x = temperature, y = baby_count)) + geom_point()
+all_clutches %>% 
+	ggplot(aes(x = temperature, y = n)) + geom_point()
+
+baby_sizes <- ls_clutches %>% 
+	filter(!is.na(clutch_number)) %>% 
+	select(temperature, replicate, clutch_number, baby1_size_um, baby2_size_um, baby3_size_um, baby4_size_um, baby_count) %>% 
+	gather(key = clutch_no, value = size, 4:7) %>% 
+	filter(!is.na(size)) %>% 
+	group_by(temperature, replicate, clutch_number, baby_count) %>% 
+	summarise(mean_baby_size = mean(size)) %>% 
+	mutate(production = mean_baby_size*baby_count)
+
+
+baby_sizes %>% 
+	ungroup() %>% View
+	ggplot(aes(x = clutch_number, y = production)) + geom_point() +
+	facet_wrap( ~ temperature, scales = "free") + geom_smooth(method = "lm")
+
+baby_sizes %>% 
+	ungroup() %>% 
+	ggplot(aes(x = clutch_number, y = mean_baby_size)) + geom_point() +
+	geom_smooth(method = "lm") +
+	facet_wrap( ~ temperature, scales = "free")
+
+baby_size_summary <- baby_sizes %>% 
+	group_by(temperature, replicate) %>% 
+	summarise(mean_baby_size_all = mean(mean_baby_size))
+
+
+b_size <- left_join(all_clutches, baby_size_summary) %>% 
+	mutate(baby_mass =  0.00402*((mean_baby_size_all/1000)^2.66))
+
+
+b_size %>% 
+	mutate(lifetime_production = n*baby_mass) %>% 
+	ungroup() %>% 
+	ggplot(aes(x = temperature, y = baby_mass)) + geom_point() +
+	geom_smooth(method = "lm")
+
+b_size %>% 
+	mutate(lifetime_production = n*baby_mass) %>% 
+	ungroup() %>% 
+	ggplot(aes(x = temperature, y = lifetime_production)) + geom_point() +
+	geom_smooth(method = "lm")
+
+b_size %>% 
+	mutate(lifetime_production = n*baby_mass) %>% 
+	ungroup() %>% 
+	ggplot(aes(x = temperature, y = n)) + geom_point() +
+	geom_smooth(method = "lm")
+
+b_size2 <- b_size %>% 
+	mutate(lifetime_production = n*baby_mass) %>% 
+	ungroup()
+
+lm(lifetime_production ~ temperature, data = b_size2) %>% summary()
