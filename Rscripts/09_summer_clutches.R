@@ -20,6 +20,6 @@ data3 %>%
 	# ggplot(aes(x = temperature, y = clutch3_age)) + geom_point()
 	# filter(!is.na(size_of_first_clutch), !is.na(size_of_2nd_clutch), !is.na(size_of_3rd_clutch)) %>% 
 	mutate(total_babies = size_of_first_clutch + size_of_2nd_clutch + size_of_3rd_clutch) %>% 
-	mutate(babies_per_day = total_babies/clutch3_age) %>% View
+	mutate(babies_per_day = total_babies/clutch3_age) %>% 
 	ggplot(aes(x = length_at_3rd_clutch, y = babies_per_day_av, color = factor(temperature))) + geom_point() +
 	geom_smooth(method = "lm")

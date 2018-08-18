@@ -10,6 +10,7 @@ library(viridis)
 library(minpack.lm)
 library(nls.multstart)
 library(nlstools)
+library(FSA)
 
 acc <- read_csv("data-raw/acclimated-daphnia-body-size.csv") %>% 
 	mutate(date_measured = mdy(date_measured)) %>% 
