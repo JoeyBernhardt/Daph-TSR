@@ -28,6 +28,9 @@ acc %>%
 	summarise_each(funs(max), size_um) %>% 
 	ggplot(aes(x = temperature, y = size_um)) + geom_point()
 
+acc %>%
+	filter(stage == "neonate") %>% View
+
 ## figure of size at stage
 acc %>% 
 	mutate(mass =  0.00402*((size_um/1000)^2.66)) %>% 
@@ -129,10 +132,11 @@ fit <- nls_multstart(size_um ~ vbT(age, Linf, K, t0),
 fit
 
 
+ac_age3 <- ac_age2 %>% 
+	filter(stage %in% c("neonate", "clutch1", "clutch2", "clutch3", "clutch4"))
 
 
-
-fits <- ac_age2 %>% 
+fits <- ac_age3 %>% 
 	group_by(unique_id) %>%
 	nest() %>% 
 	mutate(fit = purrr:::map(data, ~ nls_multstart(size_um ~ vbT(age, Linf, K, t0),
@@ -238,14 +242,54 @@ params %>%
 	geom_smooth(method = "lm", color = "black") +
 	ylab("Asymptotic mass") + xlab("Temperature (°C)")
 ggsave("figures/linf_acc_daph.pdf", width = 6, height = 4)
-	
+ggsave("figures/linf_acc_daph_tillclutch4.pdf", width = 6, height = 4)	
 
 params2 <- params %>% 
 	separate(unique_id, into = c("temperature", "replicate"), remove = FALSE) %>% 
 	mutate(temperature = as.numeric(temperature)) %>% 
 	filter(term == "Linf") 
 
+params3 <- params %>% 
+	filter(term != "t0") %>%
+	separate(unique_id, into = c("temperature", "replicate"), remove = FALSE) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	select(temperature, replicate, term, estimate) %>% 
+	spread(key = term, value = estimate) %>% 
+	mutate(linf_mass =  0.00402*((Linf/1000)^2.66)) %>% 
+	mutate(inv_temp = (1/(.00008617*(temperature + 273.15))))
 
+write_csv(params3, "data-processed/acclimated-daphnia-vb-growth-params.csv")
+
+### test of supply demand model with acclimated daphnia
+params3 %>% 
+	ggplot(aes(x = log(K), y = log(linf_mass))) + geom_point() +
+	geom_smooth(method = "lm")
+params3 %>% 
+ggplot(aes(x = log(K), y = log(linf_mass), color = temperature)) + 
+	# stat_function( fun = prediction, color = "black", linetype = "dashed") +
+	# stat_function( fun = prediction1, color = "grey", linetype = "dashed") +
+	# stat_function( fun = prediction2, color = "grey", linetype = "dashed") +
+	geom_smooth(method = "lm", color = "black") + scale_color_viridis() +
+	geom_point(size = 4) +
+	geom_point(size = 4, shape = 1) +
+	ylab("ln(asymptotic body mass") + xlab("ln(K)")
+ggsave("figures/acclimated-daphnia-asymptotic-mass-K.pdf", width = 6, height = 4)
+
+rma <- lmodel2(log(linf_mass) ~ log(K), data = params3, range.y = "interval", range.x = "interval")
+rma$regression.results
+rma$confidence.intervals
+rma$rsquare
+augment(rma)
+
+params3 %>% 
+	ggplot(aes(x = inv_temp, y = log(linf_mass))) + geom_point() +
+	scale_x_reverse() + geom_smooth(method = "lm", color = "black") +
+	ylab("Log(Linf)") + xlab("Temperature (1/kT)")
+ggsave("figures/acclimated-daphnia-asymptotic-size.pdf")
+
+
+params3 %>% 
+	do(tidy(lm(log(linf_mass) ~ inv_temp, data = .), conf.int = TRUE)) %>% View
 
 ### now get the clutch sizes for the acclimated daphnia
 
@@ -279,6 +323,8 @@ ac2 <- all_clutches %>%
 	group_by(temperature, replicate) %>% 
 	mutate(cumulative_babies = cumsum(final_baby_count)) %>% 
 	unite(unique_id, temperature, replicate, remove = FALSE)
+
+write_csv(ac2, "data-processed/acclimated-clutches-processed.csv")
 
 
 ac2 %>% 

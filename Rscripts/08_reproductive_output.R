@@ -347,6 +347,7 @@ generation_time_tsr <- all_growth %>%
 	mutate(experiment = "tsr")
 
 all_generation_times <- bind_rows(generation_time_lifespan, generation_time_tsr)
+write_csv(all_generation_times, "data-processed/all_generation_times.csv")
 
 all_generation_times %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
