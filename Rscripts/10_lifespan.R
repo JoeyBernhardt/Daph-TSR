@@ -93,7 +93,8 @@ ls3 %>%
 ls4 <- ls3 %>% 
 	mutate(temp_kelvin = temperature + 273.15) %>%
 	mutate(temp_corr_lifespan = lifespan_calc*(exp((0.51/0.00008617)*((1/temp_kelvin)-(1/293.15))))) %>% 
-	mutate(temp_corr_gen = days_to_clutch1*(exp((0.51/0.00008617)*((1/temp_kelvin)-(1/293.15)))))
+	mutate(temp_corr_gen = days_to_clutch1*(exp((0.51/0.00008617)*((1/temp_kelvin)-(1/293.15))))) %>% 
+	mutate(clutch3_age = interval(birth_date, clutch1_bd)/ddays(1)) 
 
 ### somehow figure out how to get generation time corrected to 20C
 ls4 %>% 
@@ -304,3 +305,70 @@ b_size2 <- b_size %>%
 	ungroup()
 
 lm(lifetime_production ~ temperature, data = b_size2) %>% summary()
+
+
+ls_clutches %>% 
+	ggplot(aes(x = clutch_number, y = baby_count)) + geom_point() + geom_smooth() +
+	facet_wrap( ~ temperature, scales = "free")
+
+str(lifespan)
+
+lifespan %>% 
+	mutate(clutch3_age = interval(mdy(birth_date), mdy(clutch1_bd))/ddays(1)) %>% View
+
+
+ls6 <- left_join(ls5, ls_clutch_sum)
+
+### plot of r vs temp for lifespan daphnia
+plot1 <- ls6 %>% 
+	# filter(temperature > 10) %>% 
+	mutate(r = log(baby_count*3)/clutch3_age) %>% 
+	ggplot(aes(x = temperature, y = r)) + geom_point() +
+	geom_smooth(color = "black") + 
+	xlim(10, 27) +
+	xlab("Temperature (°C)") + ylab("Intrinsic rate of increase (r)")
+
+
+## generation time
+plot2 <- ls6 %>% 
+	# filter(temperature > 10) %>% 
+	mutate(r = log(baby_count*3)/clutch3_age) %>% 
+	ggplot(aes(x = temperature, y = days_to_clutch1)) + geom_point() +
+	geom_smooth(color = "black") +
+	xlim(10, 27) +
+	xlab("Temperature (°C)") + ylab("Generation time (days)")
+
+### lifetime rep output (R0)
+plot3 <- all_clutches %>%
+	filter(temperature > 10) %>% 
+	mutate(R0 = n*baby_count) %>% 
+	ungroup() %>% 
+	ggplot(aes(x = temperature, y = R0)) + geom_point() +
+	geom_smooth(color = "black") +
+	xlim(10, 27) +
+	xlab("Temperature (°C)") + ylab("R0 (total babies per lifetime)")
+
+## lifetime production
+plot4 <- b_size %>% 
+	filter(temperature > 10) %>% 
+	mutate(lifetime_production = n*baby_mass) %>% 
+	ungroup() %>% 
+	ggplot(aes(x = temperature, y = lifetime_production)) + geom_point() +
+	geom_smooth(color = "black", method = "lm") + ylab("Lifetime production (mg C)") +
+	xlim(10, 27) +
+	xlab("Temperature (°C)")
+
+plot5 <- ls6 %>% 
+	filter(temperature > 10) %>% 
+	ggplot(aes(x = temperature, y = lifespan_calc)) + geom_point() +
+	geom_smooth(color = "black", method = "lm") +
+	xlim(10, 27) +
+	xlab("Temperature (°C)") + ylab("Lifespan (days)")
+
+
+all_plots_10b <- plot_grid(plot1, plot2, plot3, plot4, plot5, align = "v", nrow = 5, ncol = 1)
+save_plot("figures/all_lifespan_plots_10b.pdf", all_plots_10b,
+					ncol = 1, 
+					nrow = 5, 
+					base_aspect_ratio = 2
+)
