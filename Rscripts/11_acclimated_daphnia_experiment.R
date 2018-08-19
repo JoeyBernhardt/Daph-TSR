@@ -303,4 +303,37 @@ ac2 %>%
 	ggplot(aes(x = temperature, y = estimate)) + geom_point() +
 	geom_smooth() +ylab("Reproductive rate (babies/day)") + xlab("Temperature (°C)") 
 ggsave("figures/reproductive-rate-acclimated-daphnia.pdf", width = 6, height = 4)
+
+
+### ok now let's calculate r for the acclimated daphnia
+
+acc_plot1<- ac2 %>% 
+	filter(stage %in% c("clutch3")) %>% 
+	mutate(r = log(cumulative_babies)/age) %>% 
+	ungroup() %>% 
+	ggplot(aes(x = temperature, y = r)) + geom_point() +
+	geom_smooth(color = "black") +
+	xlab("Temperature (°C)") + ylab("Intrinsic rate of increase (r)")
+
+ac2 %>% 
+	# filter(stage %in% c("clutch6")) %>% 
+	mutate(r = log(cumulative_babies)/age) %>% 
+	ungroup() %>% 
+	ggplot(aes(x = temperature, y = r)) + geom_point() +
+	geom_smooth(color = "black", method = "lm") +
+	facet_wrap( ~ stage)
+
+
+acc_plot2 <- ac2 %>% 
+	filter(stage %in% c("clutch1")) %>% 
+	ungroup() %>% 
+	ggplot(aes(x = temperature, y = age)) + geom_point() +
+	geom_smooth(color = "black") +
+	xlab("Temperature (°C)") + ylab("Generation time (days)")
 	
+acc_plots <- plot_grid(acc_plot1, acc_plot2, align = "v", nrow = 2, ncol = 1)
+save_plot("figures/acc_fitness_plots.pdf", acc_plots,
+					ncol = 1, 
+					nrow = 2, 
+					base_aspect_ratio = 2
+)
