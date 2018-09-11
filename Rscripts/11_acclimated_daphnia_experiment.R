@@ -165,7 +165,11 @@ CI <- fits %>%
 
 
 params <- merge(params, CI, by = intersect(names(params), names(CI)))
+params_clutch4 <- merge(params, CI, by = intersect(names(params), names(CI)))
+write_csv(params_clutch4, "data-processed/acc_daph_vb_params_till_clutch4.csv")
 write_csv(params, "data-processed/acc_daph_vb_params.csv")
+
+params <- read_csv("data-processed/acc_daph_vb_params.csv")
 
 # get predictions
 preds <- fits %>%
@@ -383,3 +387,30 @@ save_plot("figures/acc_fitness_plots.pdf", acc_plots,
 					nrow = 2, 
 					base_aspect_ratio = 2
 )
+
+
+### ok let's merge the fitness metrics with the asymptotic body size estimates to see how 
+### fitness changes with body size
+
+ac3 <- ac2 %>% 
+	filter(stage %in% c("clutch3")) %>% 
+	mutate(r = log(cumulative_babies)/age) %>% 
+	ungroup()
+
+params4 <- params3 %>% 
+	unite(col = "unique_id", temperature, replicate, remove = FALSE)
+
+ac4 <- left_join(ac3, params4, by = c("unique_id", "temperature", "replicate"))
+
+ac4 %>% 
+	ggplot(aes(x = linf_mass, y = r, color = factor(temperature))) + geom_point(size = 3) +
+	geom_smooth(method = "lm") + scale_color_viridis_d(name = "Temperature (°C)") + scale_fill_viridis_d() +
+	ylab("Intrinsic rate of increase (r)") + xlab("Asymptotic body mass (mg DW)")
+ggsave("figures/r_vs_size_acclimated.pdf", width = 6, height = 4)
+
+ac4 %>% 
+	ggplot(aes(x = linf_mass, y = r)) + geom_point(size = 3) +
+	geom_smooth(method = "lm", color = "black") +
+	ylab("Intrinsic rate of increase (r)") + xlab("Asymptotic body mass (mg DW)")
+ggsave("figures/r_vs_size_acclimated_no_temperature.pdf", width = 6, height = 4)
+ 

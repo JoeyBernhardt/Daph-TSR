@@ -363,7 +363,7 @@ plot4 <- b_size %>%
 	ggplot(aes(x = temperature, y = lifetime_production)) + geom_point(size = 3, alpha = 0.5) +
 	geom_smooth(color = "black", method = "lm") + ylab("Lifetime production (mg C)") +
 	xlim(10, 27) +
-	xlab("Temperature (°C)")
+	xlab("Temperature (°C)") 
 
 plot5 <- ls6 %>% 
 	filter(temperature > 10) %>% 
