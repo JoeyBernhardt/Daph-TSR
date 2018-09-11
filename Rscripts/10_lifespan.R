@@ -230,6 +230,13 @@ ls_clutches %>%
 	ylab("Offspring size (um)") + xlab("Temperature (°C)")
 ggsave("figures/lifespan_offspring_size.pdf", width = 7, height = 5)
 
+ls_clutches %>% 
+	ggplot(aes(x = baby_count, y = avg_baby_size_um, color = temperature)) + geom_point(size = 3) + 
+	# geom_smooth(method= "lm") +
+	scale_color_viridis_c() +
+	ylab("Offspring size (um)") + xlab("Offspring number")
+ggsave("figures/lifespan_offspring_size_fecundity_tradeoff.pdf", width = 7, height = 5)
+
 
 ### now join the clutch sizes with the clutches
 
