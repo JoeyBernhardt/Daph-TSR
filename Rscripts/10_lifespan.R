@@ -231,11 +231,11 @@ ls_clutches %>%
 ggsave("figures/lifespan_offspring_size.pdf", width = 7, height = 5)
 
 ls_clutches %>% 
-	ggplot(aes(x = baby_count, y = avg_baby_size_um, color = temperature)) + geom_point(size = 3) + 
+	ggplot(aes(x = baby_count, y = avg_baby_size_um)) + geom_point(size = 3) + 
 	# geom_smooth(method= "lm") +
-	scale_color_viridis_c() +
-	ylab("Offspring size (um)") + xlab("Offspring number")
-ggsave("figures/lifespan_offspring_size_fecundity_tradeoff.pdf", width = 7, height = 5)
+	# scale_color_viridis_c(name = "Temperature (°C)") +
+	ylab("Offspring size (um)") + xlab("Offspring number per clutch")
+ggsave("figures/lifespan_offspring_size_fecundity_tradeoff_no_colour.pdf", width = 6, height = 5)
 
 
 ### now join the clutch sizes with the clutches
@@ -330,7 +330,7 @@ ls6 <- left_join(ls5, ls_clutch_sum)
 plot1 <- ls6 %>% 
 	# filter(temperature > 10) %>% 
 	mutate(r = log(baby_count*3)/clutch3_age) %>% 
-	ggplot(aes(x = temperature, y = r)) + geom_point() +
+	ggplot(aes(x = temperature, y = r)) + geom_point(size = 3, alpha = 0.5) +
 	geom_smooth(color = "black") + 
 	xlim(10, 27) +
 	xlab("Temperature (°C)") + ylab("Intrinsic rate of increase (r)")
@@ -340,7 +340,7 @@ plot1 <- ls6 %>%
 plot2 <- ls6 %>% 
 	# filter(temperature > 10) %>% 
 	mutate(r = log(baby_count*3)/clutch3_age) %>% 
-	ggplot(aes(x = temperature, y = days_to_clutch1)) + geom_point() +
+	ggplot(aes(x = temperature, y = days_to_clutch1)) + geom_point(size = 3, alpha = 0.5) +
 	geom_smooth(color = "black") +
 	xlim(10, 27) +
 	xlab("Temperature (°C)") + ylab("Generation time (days)")
@@ -350,7 +350,7 @@ plot3 <- all_clutches %>%
 	filter(temperature > 10) %>% 
 	mutate(R0 = n*baby_count) %>% 
 	ungroup() %>% 
-	ggplot(aes(x = temperature, y = R0)) + geom_point() +
+	ggplot(aes(x = temperature, y = R0)) + geom_point(size = 3, alpha = 0.5) +
 	geom_smooth(color = "black") +
 	xlim(10, 27) +
 	xlab("Temperature (°C)") + ylab("R0 (total babies per lifetime)")
@@ -360,22 +360,33 @@ plot4 <- b_size %>%
 	filter(temperature > 10) %>% 
 	mutate(lifetime_production = n*baby_mass) %>% 
 	ungroup() %>% 
-	ggplot(aes(x = temperature, y = lifetime_production)) + geom_point() +
+	ggplot(aes(x = temperature, y = lifetime_production)) + geom_point(size = 3, alpha = 0.5) +
 	geom_smooth(color = "black", method = "lm") + ylab("Lifetime production (mg C)") +
 	xlim(10, 27) +
 	xlab("Temperature (°C)")
 
 plot5 <- ls6 %>% 
 	filter(temperature > 10) %>% 
-	ggplot(aes(x = temperature, y = lifespan_calc)) + geom_point() +
+	ggplot(aes(x = temperature, y = lifespan_calc)) + geom_point(size = 3, alpha = 0.5) +
 	geom_smooth(color = "black", method = "lm") +
 	xlim(10, 27) +
 	xlab("Temperature (°C)") + ylab("Lifespan (days)")
 
+plot6 <- total_clutches %>% 
+	filter(temperature > 10) %>% 
+	ungroup() %>% 
+	ggplot(aes(x  = temperature, y = n)) + geom_point(size = 3, alpha = 0.5) + 
+	xlim(10, 27) +
+	geom_smooth(method = "lm", color = "black") + xlab("Temperature (°C)") + ylab("Lifetime clutches")
 
-all_plots_10b <- plot_grid(plot1, plot2, plot3, plot4, plot5, align = "v", nrow = 5, ncol = 1)
-save_plot("figures/all_lifespan_plots_10b.pdf", all_plots_10b,
-					ncol = 1, 
-					nrow = 5, 
-					base_aspect_ratio = 2
-)
+
+all_plots_10b <- plot_grid(plot1, plot2, plot3, plot4, plot5, plot6, align = "v", nrow = 3, ncol = 2, labels = c("A", "B", "C", "D", "E", "F"))
+save_plot("figures/all_lifespan_plots_10c.pdf", all_plots_10b,
+					ncol = 2, 
+					nrow = 3, 
+					base_aspect_ratio = 1.5,
+					base_height = 3.3
+  )
+ 
+    ?save_plot
+?plot_grid
