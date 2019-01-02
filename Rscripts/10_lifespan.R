@@ -324,7 +324,68 @@ lifespan %>%
 	mutate(clutch3_age = interval(mdy(birth_date), mdy(clutch1_bd))/ddays(1)) %>% View
 
 
-ls6 <- left_join(ls5, ls_clutch_sum)
+ls6 <- left_join(ls5, ls_clutch_sum) %>% 
+	mutate(r = log(baby_count*3)/clutch3_age) 
+
+ls6 %>% 
+	ggplot(aes(x = mass, y = n*baby_count, color = factor(temperature))) + geom_point() +
+	ylab("R0") + xlab("Body size") + geom_smooth(method = "lm", color = "darkgrey")
+
+ls6 %>% 
+	ggplot(aes(x = mass, y = n*baby_count)) +
+	ylab("R0") + xlab("Body size") + geom_smooth(method = "lm", color = "darkgrey") +
+	geom_point(size = 3, alpha = 0.5) 
+
+ls6 %>% 
+	filter(temperature > 10) %>% 
+	ggplot(aes(x = mass, y = n*baby_count, color = factor(temperature))) +
+	ylab("R0") + xlab("Body size") + geom_smooth(method = "lm", color = "darkgrey") +
+	geom_point(size = 3) + scale_color_viridis_d(name = "Temperature") +
+	geom_point(size = 3, shape = 1, color = "black")
+ggsave("figures/R0_v_body_size.pdf", width = 8, height = 6)
+
+ls6 %>% 
+	filter(temperature > 10) %>% 
+	ggplot(aes(x = mass, y = r, color = factor(temperature))) +
+	ylab("Intrinsic rate of increase (r)") + xlab("Body size") + geom_smooth(method = "lm", color = "darkgrey") +
+	geom_point(size = 3) + scale_color_viridis_d(name = "Temperature") +
+	geom_point(size = 3, shape = 1, color = "black")
+ggsave("figures/r_v_body_size_lifespan.pdf", width = 8, height = 6)
+
+ls6 %>% 
+	# filter(temperature > 10) %>% 
+	ggplot(aes(x = temperature, y = r, color = factor(temperature))) +
+	ylab("Intrinsic rate of increase (r)") + xlab("Temperature") + geom_smooth(color = "darkgrey") +
+	geom_point(size = 3) + scale_color_viridis_d(name = "Temperature") +
+	geom_point(size = 3, shape = 1, color = "black")
+ggsave("figures/r_v_temperature_lifespan.pdf", width = 8, height = 6)
+
+
+ls6 %>% 
+	filter(temperature > 10) %>% 
+	mutate(R0 = n*baby_count) %>% 
+	select(replicate, temperature, R0, r, mass, baby_count, n) %>% 
+	gather(key = fitness_metric, value = fitness, R0, r, baby_count, n) %>%
+	ggplot(aes(x = mass, y = fitness, color = factor(temperature))) + geom_point(size = 3) +
+	facet_wrap( ~ fitness_metric,  scales = "free_y") + geom_smooth(color = "black", method = "lm") +
+	scale_color_viridis_d(name = "Temperature")
+ggsave("figures/fitness_v_bodysize_lifespan.pdf", width = 12, height = 6)
+
+
+ls6 %>% 
+	# filter(temperature > 10) %>% 
+	mutate(R0 = n*baby_count) %>% 
+	select(replicate, temperature, R0, r, mass, baby_count, n, days_to_clutch1) %>% 
+	gather(key = fitness_metric, value = fitness, R0, r, baby_count, n, days_to_clutch1) %>%
+	ggplot(aes(x = temperature, y = fitness)) + geom_point(size = 3, alpha = 0.5) +
+	facet_wrap( ~ fitness_metric,  scales = "free_y") + geom_smooth(color = "black") +
+	scale_color_viridis_d(name = "Temperature") + ylab("Fitness") + xlab("Temperature (°C)")
+
+
+ls6 %>% 
+	filter(temperature > 10) %>% 
+	mutate(r0 = n*baby_count) %>% 
+	lm(r0 ~ mass, data = .) %>% summary()
 
 ### plot of r vs temp for lifespan daphnia
 plot1 <- ls6 %>% 

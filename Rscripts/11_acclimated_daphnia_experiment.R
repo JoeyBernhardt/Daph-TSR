@@ -11,6 +11,7 @@ library(minpack.lm)
 library(nls.multstart)
 library(nlstools)
 library(FSA)
+library(broom)
 
 acc <- read_csv("data-raw/acclimated-daphnia-body-size.csv") %>% 
 	mutate(date_measured = mdy(date_measured)) %>% 
@@ -264,6 +265,8 @@ params3 <- params %>%
 
 write_csv(params3, "data-processed/acclimated-daphnia-vb-growth-params.csv")
 
+
+params3 <- read_csv("data-processed/acclimated-daphnia-vb-growth-params.csv")
 ### test of supply demand model with acclimated daphnia
 params3 %>% 
 	ggplot(aes(x = log(K), y = log(linf_mass))) + geom_point() +
@@ -279,11 +282,31 @@ ggplot(aes(x = log(K), y = log(linf_mass), color = temperature)) +
 	ylab("ln(asymptotic body mass") + xlab("ln(K)")
 ggsave("figures/acclimated-daphnia-asymptotic-mass-K.pdf", width = 6, height = 4)
 
+
+### now find out if greater residuals are associated with lower fitness
+
+ac5 <- left_join(ac4, df2, by = c("temperature", "replicate"))
+
+### larger residuals do not seem to be associated with lower fitness
+ac5 %>% 
+	ggplot(aes(x = residuals, y = r, color = temperature)) + geom_point() +
+	geom_smooth()
+
+
+mod1 <- lm(log(linf_mass) ~ log(K), data = params3)
+df <- as.data.frame(resid(mod1))
+
+df2 <- add_residuals(params3, mod1, var = "residuals")
+
+library(lmodel2)
+library(modelr)
 rma <- lmodel2(log(linf_mass) ~ log(K), data = params3, range.y = "interval", range.x = "interval")
 rma$regression.results
 rma$confidence.intervals
 rma$rsquare
-augment(rma)
+tidy(rma)
+
+
 
 params3 %>% 
 	ggplot(aes(x = inv_temp, y = log(linf_mass))) + geom_point() +
@@ -330,6 +353,7 @@ ac2 <- all_clutches %>%
 
 write_csv(ac2, "data-processed/acclimated-clutches-processed.csv")
 
+ac2 <- read_csv("data-processed/acclimated-clutches-processed.csv")
 
 ac2 %>% 
 	ggplot(aes(x = age, y = cumulative_babies, group = unique_id, color = factor(temperature))) + geom_point() +
@@ -398,7 +422,11 @@ ac3 <- ac2 %>%
 	ungroup()
 
 params4 <- params3 %>% 
-	unite(col = "unique_id", temperature, replicate, remove = FALSE)
+	unite(col = "unique_id", temperature, replicate, remove = FALSE) %>% 
+	mutate(replicate = as.integer(replicate))
+
+str(ac3)
+str(params4)
 
 ac4 <- left_join(ac3, params4, by = c("unique_id", "temperature", "replicate"))
 
@@ -413,4 +441,13 @@ ac4 %>%
 	geom_smooth(method = "lm", color = "black") +
 	ylab("Intrinsic rate of increase (r)") + xlab("Asymptotic body mass (mg DW)")
 ggsave("figures/r_vs_size_acclimated_no_temperature.pdf", width = 6, height = 4)
+
+ac4 %>% 
+	ggplot(aes(x = linf_mass, y = r, color = factor(temperature))) + geom_point(size = 3) +
+	geom_smooth(method = "lm", color = "black") +
+	ylab("Intrinsic rate of increase (r)") + xlab("Asymptotic body mass (mg DW)")
  
+
+ac4 %>% 
+	ggplot(aes(x = temperature, y = r, color = linf_mass)) + geom_point(size = 3) + 
+	geom_smooth(method = "lm", color = "grey") + scale_color_viridis_c()
