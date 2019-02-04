@@ -311,7 +311,7 @@ tidy(rma)
 params3 %>% 
 	ggplot(aes(x = inv_temp, y = log(linf_mass))) + geom_point() +
 	scale_x_reverse() + geom_smooth(method = "lm", color = "black") +
-	ylab("Log(Linf)") + xlab("Temperature (1/kT)")
+	ylab("ln(asmyptotic body mass)") + xlab("Temperature (1/kT)")
 ggsave("figures/acclimated-daphnia-asymptotic-size.pdf")
 
 
@@ -451,3 +451,66 @@ ac4 %>%
 ac4 %>% 
 	ggplot(aes(x = temperature, y = r, color = linf_mass)) + geom_point(size = 3) + 
 	geom_smooth(method = "lm", color = "grey") + scale_color_viridis_c()
+
+
+
+# compare the size rate trade-off in the two experiments ------------------
+
+acc_params <- read_csv("data-processed/acclimated-daphnia-vb-growth-params.csv") %>% 
+	mutate(experiment  = "acclimated")
+acc_params_clutch4 <- read_csv('data-processed/acc_daph_vb_params_till_clutch4.csv') %>% 
+	select(unique_id, term, estimate) %>% 
+	filter(term != "t0") %>% 
+	spread(key = term, value = estimate) %>% 
+	separate(unique_id, into = c("temperature", "replicate")) %>%
+	mutate(experiment  = "clutch4") %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	mutate(replicate = as.integer(replicate))
+
+
+all_params_acc <- bind_rows(acc_params, acc_params_clutch4)
+
+## ok, this looks like the VB parameters are basically the same regardless of whether it's 4 clutches or all...or maybe the 
+## 'all' one was actually estimated with only the 4 clutches
+all_params_acc %>% 
+	# filter(experiment == "all_clutches") %>% 
+	ggplot(aes(x = K, y = Linf, color = experiment)) + geom_point()
+
+
+acute_vb <- read_csv("data-processed/von_bert_mass.csv") %>% 
+	select(Linf, linf_mass, replicate, temperature, K) %>% 
+	mutate(experiment = "acute")
+
+
+all_vb <- bind_rows(acute_vb, acc_params) %>% 
+	mutate(inv_temp = (1/(.00008617*(temperature + 273.15))))
+
+prediction <- function(x) -0.60*x -4.5
+prediction1 <- function(x) -0.90*x -5.8
+prediction2 <- function(x) -0.45*x -3.8
+all_vb %>% 
+	ggplot(aes(x = log(K), y = log(linf_mass), color = experiment)) + geom_point(size = 2) +
+	geom_smooth(method = "lm", aes(fill = experiment)) + xlab("ln(growth constant k)") + ylab("ln(asymptotic body mass)") +
+	stat_function( fun = prediction, color = "black", linetype = "dashed") +
+	stat_function( fun = prediction1, color = "grey", linetype = "dashed") +
+	stat_function( fun = prediction2, color = "grey", linetype = "dashed") +
+	scale_color_viridis_d(begin = 0.2, end = 0.9) +
+	scale_fill_viridis_d(begin = 0.2, end = 0.9) + geom_point(size = 2) + geom_point(shape = 1, color = "black", size = 2)
+
+ggsave("figures/size-rate-tradeoff-both-experiments.pdf", width = 6, height = 4)
+ggsave("figures/size-rate-tradeoff-both-experiments.png", width = 6, height = 4)
+
+all_vb %>% 
+	ggplot(aes(x = log(K), y = log(linf_mass), color = factor(temperature))) + geom_point(aes(shape = experiment), size = 3) +
+	geom_smooth(method = "lm", aes(fill = experiment), color = "black") + xlab("ln(growth constant k)") + ylab("ln(asymptotic body mass)") +
+	scale_color_viridis_d(begin = 0.2, end = 0.9, option = "inferno") +
+	scale_fill_viridis_d(begin = 0.2, end = 0.9) 
+
+all_vb %>% 
+	ggplot(aes(x = inv_temp, y = log(linf_mass), color = experiment)) + geom_point(size = 2) +
+	geom_smooth(method = "lm", aes(fill = experiment)) + xlab("Temperature (1/kT)") + ylab("ln(asymptotic body mass)") +
+	scale_color_viridis_d(begin = 0.2, end = 0.9) +
+	scale_fill_viridis_d(begin = 0.2, end = 0.9) + geom_point(size = 2) + geom_point(shape = 1, color = "black", size = 2) +
+	scale_x_reverse()
+ggsave("figures/size-temp-both-experiments.pdf", width = 6, height = 4)
+ggsave("figures/size-temp-both-experiments.png", width = 6, height = 4)

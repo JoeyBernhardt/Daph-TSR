@@ -599,6 +599,7 @@ all3 %>%
 
 prediction <- function(x) -0.60*x -4.26
 prediction1 <- function(x) -0.90*x -5.36
+
 prediction2 <- function(x) -0.45*x -3.72
 
  
