@@ -718,7 +718,7 @@ resp.mass <- read_csv("data-raw/resp.mass.csv")
 
 resp <- resp.mass %>% 
 	rename(rate = mean) %>% 
-	mutate(measurement = "Mass-normalized metablic rate")
+	mutate(measurement = "Mass-normalized metabolic rate")
 
 Ks <- all3 %>% 
 	filter(Linf < 4000) %>% 
@@ -732,7 +732,7 @@ responses <- bind_rows(resp, Ks) %>%
 responses %>% 
 	group_by(measurement) %>% 
 	do(tidy(lm(log(rate) ~ inverse_temp, data =.), conf.int = TRUE)) %>% 
-	filter(term != "(Intercept)") %>% View
+	filter(term != "(Intercept)") %>% 
 	ggplot(aes(x = measurement, y = estimate)) + geom_point(size = 3) +
 geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.1) +
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
