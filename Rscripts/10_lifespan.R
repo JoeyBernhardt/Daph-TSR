@@ -221,6 +221,12 @@ ls_clutches %>%
 	ylab("Offspring per clutch") + xlab("Temperature (°C)") + scale_color_viridis_c()
 ggsave("figures/lifespan_offspring_per_clutch.pdf", width = 7, height = 5)
 
+
+ls_clutches %>% 
+	ggplot(aes(x = temperature, y = baby_count, color = avg_baby_size_um)) + geom_point(size = 3) + geom_smooth(method = "lm", color = "black") +
+	ylab("Offspring per clutch") + xlab("Temperature (°C)") + scale_color_viridis_c()
+
+
 lm(baby_count ~ temperature, data = ls_clutches) %>% tidy(conf.int = TRUE)
 
 
@@ -231,11 +237,12 @@ ls_clutches %>%
 ggsave("figures/lifespan_offspring_size.pdf", width = 7, height = 5)
 
 ls_clutches %>% 
-	ggplot(aes(x = baby_count, y = avg_baby_size_um)) + geom_point(size = 3) + 
+	ggplot(aes(x = baby_count, y = avg_baby_size_um, color = factor(temperature))) + geom_point(size = 3) + 
 	# geom_smooth(method= "lm") +
-	# scale_color_viridis_c(name = "Temperature (°C)") +
+	scale_color_viridis_d(name = "Temperature (°C)") +
 	ylab("Offspring size (um)") + xlab("Offspring number per clutch")
 ggsave("figures/lifespan_offspring_size_fecundity_tradeoff_no_colour.pdf", width = 6, height = 5)
+ggsave("figures/lifespan_offspring_size_fecundity_tradeoff_colour.png", width = 6, height = 4)
 
 
 ### now join the clutch sizes with the clutches
@@ -266,7 +273,7 @@ baby_sizes <- ls_clutches %>%
 
 
 baby_sizes %>% 
-	ungroup() %>% View
+	ungroup() %>% 
 	ggplot(aes(x = clutch_number, y = production)) + geom_point() +
 	facet_wrap( ~ temperature, scales = "free") + geom_smooth(method = "lm")
 
@@ -364,9 +371,9 @@ ggsave("figures/r_v_temperature_lifespan.pdf", width = 8, height = 6)
 ls6 %>% 
 	filter(temperature > 10) %>% 
 	mutate(R0 = n*baby_count) %>% 
-	select(replicate, temperature, R0, r, mass, baby_count, n) %>% 
+	select(replicate, temperature, R0, r, mass, baby_count, n, max_body_size) %>% 
 	gather(key = fitness_metric, value = fitness, R0, r, baby_count, n) %>%
-	ggplot(aes(x = mass, y = fitness, color = factor(temperature))) + geom_point(size = 3) +
+	ggplot(aes(x = max_body_size, y = fitness, color = factor(temperature))) + geom_point(size = 3) +
 	facet_wrap( ~ fitness_metric,  scales = "free_y") + geom_smooth(color = "black", method = "lm") +
 	scale_color_viridis_d(name = "Temperature")
 ggsave("figures/fitness_v_bodysize_lifespan.pdf", width = 12, height = 6)
@@ -375,7 +382,7 @@ ggsave("figures/fitness_v_bodysize_lifespan.pdf", width = 12, height = 6)
 ls6 %>% 
 	# filter(temperature > 10) %>% 
 	mutate(R0 = n*baby_count) %>% 
-	select(replicate, temperature, R0, r, mass, baby_count, n, days_to_clutch1) %>% 
+	select(replicate, temperature, R0, r, mass, baby_count, n, days_to_clutch1, max_body_size) %>% 
 	gather(key = fitness_metric, value = fitness, R0, r, baby_count, n, days_to_clutch1) %>%
 	ggplot(aes(x = temperature, y = fitness)) + geom_point(size = 3, alpha = 0.5) +
 	facet_wrap( ~ fitness_metric,  scales = "free_y") + geom_smooth(color = "black") +
@@ -389,18 +396,26 @@ ls6 %>%
 
 ### plot of r vs temp for lifespan daphnia
 plot1 <- ls6 %>% 
-	# filter(temperature > 10) %>% 
+	filter(temperature > 10) %>% 
 	mutate(r = log(baby_count*3)/clutch3_age) %>% 
 	ggplot(aes(x = temperature, y = r)) + geom_point(size = 3, alpha = 0.5) +
 	geom_smooth(color = "black") + 
 	xlim(10, 27) +
 	xlab("Temperature (°C)") + ylab("Intrinsic rate of increase (r)")
 
+## replace with the r estimates from the acclimated experiment, not the lifespan, since those weren't reliable.
+plot1 <- little_rs %>% 
+	filter(temperature > 10) %>% 
+	filter(experiment == "acclimated") %>% 
+	ggplot(aes(x = temperature, y = r)) + geom_point(size = 3, alpha = 0.5) +
+	geom_smooth(color = "black", method = "lm") + 
+	xlim(10, 27) +
+	xlab("Temperature (°C)") + ylab("Intrinsic rate of increase (r)")
+
 
 ## generation time
 plot2 <- ls6 %>% 
-	# filter(temperature > 10) %>% 
-	mutate(r = log(baby_count*3)/clutch3_age) %>% 
+	filter(temperature > 10) %>% 
 	ggplot(aes(x = temperature, y = days_to_clutch1)) + geom_point(size = 3, alpha = 0.5) +
 	geom_smooth(color = "black") +
 	xlim(10, 27) +
@@ -451,3 +466,46 @@ save_plot("figures/all_lifespan_plots_10c.pdf", all_plots_10b,
  
     ?save_plot
 ?plot_grid
+
+
+### ok now let's add the other data for r and generation time for the other experiments!
+
+ac2 <- read_csv("data-processed/acclimated-clutches-processed.csv")
+
+little_r <- ac2 %>% 
+	filter(stage %in% c("clutch3")) %>% 
+	mutate(r = log(cumulative_babies)/age) %>% 
+	mutate(experiment = "acclimated")
+	
+	
+	generation_time <- ac2 %>% 
+	filter(stage %in% c("clutch1")) %>% 
+	rename(generation_time = age) %>% 
+		mutate(experiment = "acclimated")
+	
+	
+	little_r_ls <- ls6 %>% 
+		# filter(temperature > 10) %>% 
+		mutate(r = log(baby_count*3)/clutch3_age) %>%  
+		mutate(experiment = "ls")
+	
+	
+	generation_time_ls <- ls6 %>% 
+		rename(generation_time = days_to_clutch1)%>% 
+		mutate(experiment = "ls")
+
+	
+	generation_times <- bind_rows(generation_time, generation_time_ls)
+	little_rs <- bind_rows(little_r, little_r_ls)
+	
+	
+	generation_times %>% 
+		ggplot(aes(x = temperature, y = generation_time, color = experiment)) + geom_jitter(width = 0)
+	
+	
+## ok I think we should only use the little rs from the acclimated experiment and the non-acclimated, but the lifespan experiment	
+	
+	little_rs %>% 
+		filter(experiment == "acclimated") %>% 
+		ggplot(aes(x = temperature, y = r, color = experiment)) + geom_point() + geom_smooth(method = "lm")
+	
