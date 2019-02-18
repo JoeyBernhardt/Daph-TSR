@@ -488,7 +488,7 @@ all_vb <- bind_rows(acute_vb, acc_params) %>%
 prediction <- function(x) -0.60*x -4.5
 prediction1 <- function(x) -0.90*x -5.8
 prediction2 <- function(x) -0.45*x -3.8
-all_vb %>% 
+plot1 <- all_vb %>% 
 	ggplot(aes(x = log(K), y = log(linf_mass), color = experiment)) + geom_point(size = 2) +
 	geom_smooth(method = "lm", aes(fill = experiment)) + xlab("ln(growth constant k)") + ylab("ln(asymptotic body mass)") +
 	stat_function( fun = prediction, color = "black", linetype = "dashed") +
@@ -506,7 +506,7 @@ all_vb %>%
 	scale_color_viridis_d(begin = 0.2, end = 0.9, option = "inferno") +
 	scale_fill_viridis_d(begin = 0.2, end = 0.9) 
 
-all_vb %>% 
+plot2 <- all_vb %>% 
 	ggplot(aes(x = inv_temp, y = log(linf_mass), color = experiment)) + geom_point(size = 2) +
 	geom_smooth(method = "lm", aes(fill = experiment)) + xlab("Temperature (1/kT)") + ylab("ln(asymptotic body mass)") +
 	scale_color_viridis_d(begin = 0.2, end = 0.9) +
@@ -514,3 +514,12 @@ all_vb %>%
 	scale_x_reverse()
 ggsave("figures/size-temp-both-experiments.pdf", width = 6, height = 4)
 ggsave("figures/size-temp-both-experiments.png", width = 6, height = 4)
+
+
+all_trade_off_plots <- plot_grid(plot1, plot2, align = "v", nrow = 2, ncol = 1, labels = c("A", "B"))
+save_plot("figures/all_trade_off_plots.png", all_trade_off_plots,
+					ncol = 1, 
+					nrow = 2, 
+					base_aspect_ratio = 1.5,
+					base_height = 3.3
+)

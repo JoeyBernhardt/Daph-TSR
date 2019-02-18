@@ -48,7 +48,7 @@ all_gens %>%
 
 
 all_gens %>% 
-	filter(experiment != "summer2016") %>% 
+	# filter(experiment != "summer2016") %>% 
 	mutate(inv_temp = (1/(.00008617*(temperature + 273.15)))) %>% 
 	group_by(experiment) %>% 
 	do(tidy(lm(log(generation_time) ~ inv_temp, data = .), conf.int = TRUE)) %>% 
@@ -70,4 +70,6 @@ all_gens %>%
 	geom_point(size = 2, shape = 1) +
 	geom_point(size = 2) 
 ggsave("figures/gen-times-color.pdf", width = 6, height = 4)
+
+write_csv(all_gens, "data-processed/all_generation_times.csv")
 	
