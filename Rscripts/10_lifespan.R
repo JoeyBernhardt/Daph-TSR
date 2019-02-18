@@ -405,7 +405,7 @@ plot1 <- ls6 %>%
 
 ## replace with the r estimates from the acclimated experiment, not the lifespan, since those weren't reliable.
 plot1 <- little_rs %>% 
-	filter(temperature > 10) %>% 
+	# filter(temperature > 10) %>% 
 	filter(experiment == "acclimated") %>% 
 	ggplot(aes(x = temperature, y = r)) + geom_point(size = 3, alpha = 0.5) +
 	geom_smooth(color = "black", method = "lm") + 
@@ -415,7 +415,7 @@ plot1 <- little_rs %>%
 
 ## generation time
 plot2 <- ls6 %>% 
-	filter(temperature > 10) %>% 
+	# filter(temperature > 10) %>% 
 	ggplot(aes(x = temperature, y = days_to_clutch1)) + geom_point(size = 3, alpha = 0.5) +
 	geom_smooth(color = "black") +
 	xlim(10, 27) +
@@ -457,15 +457,13 @@ plot6 <- total_clutches %>%
 
 
 all_plots_10b <- plot_grid(plot1, plot2, plot3, plot4, plot5, plot6, align = "v", nrow = 3, ncol = 2, labels = c("A", "B", "C", "D", "E", "F"))
-save_plot("figures/all_lifespan_plots_10c.pdf", all_plots_10b,
+save_plot("figures/all_lifespan_plots_10c.png", all_plots_10b,
 					ncol = 2, 
 					nrow = 3, 
 					base_aspect_ratio = 1.5,
 					base_height = 3.3
   )
- 
-    ?save_plot
-?plot_grid
+
 
 
 ### ok now let's add the other data for r and generation time for the other experiments!
