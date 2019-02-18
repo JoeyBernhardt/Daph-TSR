@@ -35,7 +35,7 @@ size2 %>%
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	mutate(mass =  0.00402*((actual_size_um/1000)^2.66)) %>% 
 	mutate(log_mass =  log(mass)) %>% 
-	select(inverse_temp, temperature, everything()) %>% View
+	select(inverse_temp, temperature, everything()) %>% 
 	mutate(stage = ifelse(stage == "clutch1", "A) Size at clutch 1", stage)) %>% 
 	mutate(stage = ifelse(stage == "clutch2", "B) Size at clutch 2", stage)) %>% 
 	mutate(stage = ifelse(stage == "clutch3", "C) Size at clutch 3", stage)) %>% 
@@ -760,7 +760,7 @@ responses %>%
 	theme(text = element_text(size=16, family = "Helvetica")) +
 	theme(strip.background = element_rect(colour="white", fill="white")) + xlab("Temperature (1/kT)") +
 	ylab("Log (rate of demand)")
-ggsave("figures/metabolic_rate_growth_rate_kT.png", width = 6.5, height = 3)
+ggsave("figures/metabolic_rate_growth_rate_kT.png", width = 6.8, height = 3)
 ggsave("figures/metabolic_rate_growth_rate_kT.pdf", width = 6.5, height = 3)
 ggsave("figures/metabolic_rate_growth_rate.png", width = 6.5, height = 3)
 ggsave("figures/metabolic_rate_growth_rate.pdf", width = 6.5, height = 3)
