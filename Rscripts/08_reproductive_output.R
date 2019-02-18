@@ -469,6 +469,10 @@ vb <- read_csv("data-processed/von_bert_mass.csv")
 
 all7 <- left_join(vb, all6, by = c("temperature", "replicate")) %>% 
 	distinct(unique, .keep_all = TRUE)
+
+
+write_csv(all7, "data-processed/tsr-data.csv")
+
 generation_time_plot <- all7 %>% 
 	# filter(Linf < 4000) %>% 
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%

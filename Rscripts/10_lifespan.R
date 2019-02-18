@@ -403,23 +403,43 @@ plot1 <- ls6 %>%
 	xlim(10, 27) +
 	xlab("Temperature (°C)") + ylab("Intrinsic rate of increase (r)")
 
+
+# bring in generation times  ----------------------------------------------
+
+all_gens <- read_csv("data-processed/all_generation_times.csv")
+all_rs <- read_csv("data-processed/all_little_rs.csv")
+
 ## replace with the r estimates from the acclimated experiment, not the lifespan, since those weren't reliable.
-plot1 <- little_rs %>% 
-	# filter(temperature > 10) %>% 
-	filter(experiment == "acclimated") %>% 
-	ggplot(aes(x = temperature, y = r)) + geom_point(size = 3, alpha = 0.5) +
-	geom_smooth(color = "black", method = "lm") + 
+plot1 <- all_rs %>% 
+	filter(experiment != "ls") %>% 
+	mutate(experiment = ifelse(experiment == "tsr", "acute", experiment)) %>% 
+	# filter(experiment == "acclimated") %>% 
+	ggplot(aes(x = temperature, y = r, color = experiment)) + geom_point(size = 3, alpha = 0.7) +
+	geom_smooth(aes(fill = experiment), method = "lm") + 
 	xlim(10, 27) +
-	xlab("Temperature (°C)") + ylab("Intrinsic rate of increase (r)")
+	xlab("Temperature (°C)") + ylab("Intrinsic rate of increase (r)") +
+	scale_color_viridis_d(begin = 0.2, end = 0.9) +
+	scale_fill_viridis_d(begin = 0.2, end = 0.9) +
+	geom_point(shape = 1, color = "black", size = 3) +
+	theme(legend.position = c(0.1, 0.8))
 
 
 ## generation time
-plot2 <- ls6 %>% 
+plot2 <- all_gens %>% 
+	filter(experiment != "summer2016", experiment != "lifepsan") %>% 
+	mutate(experiment = ifelse(experiment == "tsr", "acute", experiment)) %>% 
 	# filter(temperature > 10) %>% 
-	ggplot(aes(x = temperature, y = days_to_clutch1)) + geom_point(size = 3, alpha = 0.5) +
-	geom_smooth(color = "black") +
+	ggplot(aes(x = temperature, y = generation_time, color = experiment)) + geom_point(size = 3, alpha = 0.7) +
+	geom_smooth(aes(fill = experiment)) +
 	xlim(10, 27) +
-	xlab("Temperature (°C)") + ylab("Generation time (days)")
+	xlab("Temperature (°C)") + ylab("Generation time (days)") +
+	scale_color_viridis_d(begin = 0.2, end = 0.9) +
+	scale_fill_viridis_d(begin = 0.2, end = 0.9) +
+	geom_point(shape = 1, color = "black", size = 3)+
+	theme(legend.position = c(0.1, 0.8))
+
+
+
 
 ### lifetime rep output (R0)
 plot3 <- all_clutches %>%
@@ -457,7 +477,7 @@ plot6 <- total_clutches %>%
 
 
 all_plots_10b <- plot_grid(plot1, plot2, plot3, plot4, plot5, plot6, align = "v", nrow = 3, ncol = 2, labels = c("A", "B", "C", "D", "E", "F"))
-save_plot("figures/all_lifespan_plots_10c.png", all_plots_10b,
+save_plot("figures/all_lifespan_plots_10_acclimated_acute.png", all_plots_10b,
 					ncol = 2, 
 					nrow = 3, 
 					base_aspect_ratio = 1.5,
@@ -469,6 +489,37 @@ save_plot("figures/all_lifespan_plots_10c.png", all_plots_10b,
 ### ok now let's add the other data for r and generation time for the other experiments!
 
 ac2 <- read_csv("data-processed/acclimated-clutches-processed.csv")
+tsr_data <- read_csv("data-processed/tsr-data.csv")
+
+tsr_r <- tsr_data %>% 
+	select(temperature, replicate, babies_per_time) %>% 
+	rename(r = babies_per_time) %>% 
+	mutate(experiment = "tsr")
+
+
+tsr_data %>% 
+	select(temperature, somatic_growth_rate, clutch1_age) %>% 
+	mutate(somatic_growth_rate = scale(somatic_growth_rate)) %>% 
+	mutate(clutch1_age = scale(clutch1_age)) %>% 
+	rename(generation_time = clutch1_age) %>% 
+	gather(key = response, value = value, 2:3) %>%
+	ggplot(aes(x = temperature, y = value, color = response)) + geom_point() + geom_smooth(method = "lm") +
+	ylab("Standardized trait value") + xlab("Temperature (°C)")
+ggsave("figures/gen_time_growth_rate_scaling.png", width = 6, height = 4)
+
+
+	ggplot(aes(x = temperature, y = scale(somatic_growth_rate))) + geom_point() +
+	geom_point(aes(x = temperature, y = scale(clutch1_age)), color = "blue", data = tsr_data) + 
+tsr_data %>% 
+	ggplot(aes(x = temperature, y = clutch1_age)) + geom_point()
+
+
+tsr_data %>% View
+	lm(scale(clutch1_age) ~ temperature, data = .) %>% tidy(conf.int = TRUE)
+
+tsr_data %>% 
+	lm(scale(somatic_growth_rate) ~ temperature, data = .) %>% tidy(conf.int = TRUE)
+
 
 little_r <- ac2 %>% 
 	filter(stage %in% c("clutch3")) %>% 
@@ -494,7 +545,9 @@ little_r <- ac2 %>%
 
 	
 	generation_times <- bind_rows(generation_time, generation_time_ls)
-	little_rs <- bind_rows(little_r, little_r_ls)
+	little_rs <- bind_rows(little_r, little_r_ls, tsr_r)
+	
+	write_csv(little_rs, "data-processed/all_little_rs.csv")
 	
 	
 	generation_times %>% 
@@ -504,6 +557,6 @@ little_r <- ac2 %>%
 ## ok I think we should only use the little rs from the acclimated experiment and the non-acclimated, but the lifespan experiment	
 	
 	little_rs %>% 
-		filter(experiment == "acclimated") %>% 
+		filter(experiment != "ls") %>% 
 		ggplot(aes(x = temperature, y = r, color = experiment)) + geom_point() + geom_smooth(method = "lm")
 	
