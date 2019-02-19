@@ -63,9 +63,10 @@ all_sizes <- bind_rows(size3, acc_size)
 
 all_sizes %>% 
 	ggplot(aes(x = temperature, y = mass, color = experiment)) + geom_point() + 
-	geom_smooth(method = "lm") +
+	geom_smooth(method = "lm", aes(fill = experiment)) +
 	facet_wrap( ~ stage) + ylab("Dry mass (mg)") + xlab("Temperature (°C)") +
 	scale_color_viridis_d(begin = 0.2, end = 0.9) +
 	scale_fill_viridis_d(begin = 0.2, end = 0.9) +
 	geom_point(shape = 1, color = "black", size = 1.5)+
 	theme(legend.position = c(0.1, 0.9))
+ggsave("figures/size_clutches_acclimated_acute.png", width = 8, height = 5)
