@@ -534,7 +534,10 @@ generation_times <- read_csv("data-processed/all_generation_times.csv") %>%
 	mutate(replicate = as.integer(replicate))
 
 fecundity <- acc_clutch %>% 
-	select(temperature, replicate, clutch_number, final_baby_count, initial_baby_count) 
+	select(temperature, replicate, clutch_number, final_baby_count, initial_baby_count) %>% 
+	mutate(experiment = "acclimated")
+
+write_csv(fecundity, "data-processed/acclimated-fecundity.csv")
 
 
 n_t <- left_join(fecundity, generation_times, by = c("temperature", "replicate"))

@@ -17,6 +17,12 @@ all_generation_times <- read_csv("data-processed/all_generation_times.csv") %>%
 acclimated_gens <- read_csv("data-processed/acclimated-clutches-processed.csv") %>% 
 	mutate(replicate = as.character(replicate))
 
+tsr_generation_times <- winter2017 %>% 
+	rename(generation_time = clutch1_age) %>% 
+	select(temperature, replicate, generation_time) %>% 
+	mutate(experiment = "tsr") %>% 
+	mutate(replicate = as.character(replicate))
+
 
 gens_summer2016 <- summer2016 %>% 
 	mutate(date_of_birth_m_d_y = mdy(date_of_birth_m_d_y)) %>% 
@@ -40,7 +46,7 @@ gens_acclimated <- acclimated_gens %>%
 str(gens_summer2016)
 str(gens_acclimated)
 str(all_generation_times)
-all_gens <- bind_rows(gens_summer2016, gens_acclimated, all_generation_times)
+all_gens <- bind_rows(gens_summer2016, gens_acclimated, tsr_generation_times)
 
 all_gens %>% 
 	ggplot(aes(x = temperature, y = generation_time, color = experiment)) + geom_point() +
