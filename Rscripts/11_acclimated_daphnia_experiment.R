@@ -523,3 +523,36 @@ save_plot("figures/all_trade_off_plots.png", all_trade_off_plots,
 					base_aspect_ratio = 1.5,
 					base_height = 3.3
 )
+
+
+
+
+# make plots of generation time vs. fecundity -----------------------------
+
+generation_times <- read_csv("data-processed/all_generation_times.csv") %>% 
+	filter(experiment == "acclimated") %>% 
+	mutate(replicate = as.integer(replicate))
+
+fecundity <- acc_clutch %>% 
+	select(temperature, replicate, clutch_number, final_baby_count, initial_baby_count) 
+
+
+n_t <- left_join(fecundity, generation_times, by = c("temperature", "replicate"))
+
+
+library(plotrix)
+n_t %>% 
+	ggplot(aes(x = initial_baby_count, y = generation_time, color = factor(temperature))) + geom_point() + 
+	geom_smooth(aes(color = factor(temperature), fill = factor(temperature)))
+
+
+n_t %>% 
+	filter(clutch_number == 1) %>%
+	ggplot(aes(x = final_baby_count, y = generation_time, color = factor(clutch_number))) + geom_point() + 
+	geom_smooth()
+ 
+	
+	n_t %>% 
+		ggplot(aes(x = initial_baby_count, y = final_baby_count, color = factor(temperature))) + geom_point() + 
+		geom_abline(slope = 1, intercept = 0)
+	
