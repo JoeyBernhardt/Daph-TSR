@@ -23,7 +23,7 @@ size3 <- size2 %>%
 	mutate(inverse_temp = (1/(.00008617*(temperature+273.15)))) %>%
 	mutate(mass =  0.00402*((actual_size_um/1000)^2.66)) %>% 
 	mutate(log_mass =  log(mass)) %>% 
-	select(temperature, log_mass, stage, mass) %>% 
+	select(temperature, log_mass, stage, mass, replicate) %>% 
 	mutate(experiment = "acute")
 	
 	
@@ -53,12 +53,14 @@ acc_size <- acc %>%
 	mutate(mass =  0.00402*((size_um/1000)^2.66)) %>% 
 	filter(stage %in% c("clutch1","clutch2", "clutch3", "clutch4", "clutch5", "clutch6")) %>% 
 	mutate(log_mass = log(mass)) %>% 
-	select(temperature, stage, log_mass, mass) %>% 
+	select(temperature, stage, log_mass, mass, replicate) %>% 
 	mutate(experiment = "acclimated")
 
 
 
 all_sizes <- bind_rows(size3, acc_size)
+
+write_csv(all_sizes, "data-processed/all_measured_sizes_acute_acclimated.csv")
 
 
 all_sizes %>% 

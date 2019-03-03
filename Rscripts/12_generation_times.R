@@ -48,6 +48,8 @@ str(gens_acclimated)
 str(all_generation_times)
 all_gens <- bind_rows(gens_summer2016, gens_acclimated, tsr_generation_times)
 
+write_csv(all_gens, "data-processed/generation_times_all.csv") ## this is now with the replicate number for tsr
+ 
 all_gens %>% 
 	ggplot(aes(x = temperature, y = generation_time, color = experiment)) + geom_point() +
 	geom_smooth() + facet_wrap( ~ experiment)

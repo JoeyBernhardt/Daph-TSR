@@ -9,7 +9,7 @@ ls_clutches <- read_csv("data-raw/lifespan-clutches.csv") %>%
 	mutate(experiment = "lifespan") %>% 
 	rename(fecundity = baby_count)
 
-winter_tsr_babies <- read_csv("data-raw/winter_tsr_babies.csv") %>% 
+winter_tsr_babies <- read_csv("data-raw/winter_tsr_babies.csv") %>% View
 	select(temperature, replicate, clutch_number, number_of_babies) %>% 
 	mutate(experiment = "tsr") %>%
 	rename(fecundity = number_of_babies)
@@ -50,6 +50,30 @@ all_nt %>%
 
 all_nt %>% 
 	filter(clutch_number == 1) %>% 
+	filter(experiment != "lifespan") %>% 
+	filter(generation_time < 60) %>% 
 	ggplot(aes(x = fecundity, y = generation_time, fill = factor(temperature), color = factor(temperature))) + geom_point() +
-	geom_smooth(method = "lm") + ylab("Generation time (days)") + xlab("Fecundity (babies/clutch)")
+	geom_smooth(method = "lm") + ylab("Generation time (days)") +
+	xlab("Fecundity (babies/clutch)")
 ggsave("figures/generation_time_fecundity_colour.png", width = 8, height = 6)
+
+
+
+all_sizes <- read_csv("data-processed/all_measured_sizes_acute_acclimated.csv") %>% 
+	mutate(experiment = ifelse(experiment == "acute", "tsr", experiment)) %>% 
+	rename(clutch_number = stage) %>% 
+	mutate(clutch_number = case_when(clutch_number == "clutch1" ~ 1,
+																	 clutch_number == "clutch2" ~ 2,
+																	 clutch_number == "clutch3" ~ 3))
+
+
+all <- left_join(all_nt, all_sizes)
+
+
+all %>% 
+	filter(clutch_number == 1, mass < 0.075) %>% 
+	ggplot(aes(x = mass, y = fecundity, fill = factor(temperature), color = factor(temperature))) +
+	geom_point() + geom_smooth(method = "lm") + ylab("Fecundity (babies/clutch)") +
+	xlab("Body size (mg DW)") + scale_color_viridis_d(name = "Temperature") + scale_fill_viridis_d(name = "Temperature")
+ggsave("figures/fecundity-size.png", width = 8, height = 6)
+
