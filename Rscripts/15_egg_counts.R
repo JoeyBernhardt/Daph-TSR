@@ -34,13 +34,19 @@ all_clutches <- left_join(clutch_numbers, lengths) %>%
 				 replicate = clutch, 
 				 clutch = `-`) %>% 
 	mutate(clutch = str_replace(clutch, "clutch", "")) %>% 
-	mutate(clutch = as.numeric(clutch)) %>% 
-	mutate(length_mm = Length/1.593)
+	mutate(clutch_number = as.numeric(clutch) + 1) %>% 
+	mutate(length_mm = Length/1.593) %>% 
+	mutate(unique_id = paste(temperature, replicate, sep = "_")) %>% 
+	mutate(temperature = as.numeric(temperature)) %>% 
+	mutate(replicate = as.numeric(replicate)) %>% 
+	filter(!grepl("apr", date))  # to just get the acclimated experiment version
 
 ### scale is 1.593 pixels = 1mm
 
+length(unique(all_clutches$unique_id))
 
 all_clutches %>% 
+	filter(!grepl("apr", date)) %>% 
 	ggplot(aes(x = length_mm, y = n)) + geom_point()+
 	geom_smooth(method = "lm", color = "black") +
 	ylab("Number of eggs") + xlab("Body length (mm)")
@@ -52,15 +58,54 @@ all_clutches %>%
 
 
 all_clutches %>%
+	filter(!grepl("apr", date)) %>% 
 	lm(n ~ Length, data = .) %>% summary()
 
 library(lme4)
 library(MuMIn)
 
 mm <- all_clutches %>%
-	lmer(n ~ Length + (1|clutch), data = .,  REML=FALSE)
+	filter(!grepl("apr", date)) %>% 
+	lmer(n ~ Length + (1|clutch_number) + (1|unique_id), data = .,  REML=FALSE)
 
 summary(mm)
 r.squaredGLMM(mm)
 anova(mm)
 coef(mm)
+
+fecundity <- read_csv("data-processed/acclimated-fecundity.csv") 
+
+
+all_fecund <- left_join(fecundity, all_clutches)
+
+
+all_fecund %>% 
+	ggplot(aes(x = length_mm, y = initial_baby_count)) + geom_point()
+
+all_fecund %>% 
+	ggplot(aes(x = n, y = final_baby_count)) + geom_point() +
+	geom_abline(yintercept = 0, slope = 1)
+
+all_fecund %>% 
+	ggplot(aes(x = final_baby_count, y = initial_baby_count)) + geom_point()
+
+
+all_fecund %>%
+	rename(egg_number = n) %>% 
+	gather(key = fecundity_stage, value = fecundity, egg_number, final_baby_count) %>% 
+	ggplot(aes(x = length_mm, y = fecundity, color = fecundity_stage)) + geom_point() +
+	geom_smooth(method = "lm") +
+	facet_wrap( ~ fecundity_stage)
+
+
+all_fecund %>%
+	rename(egg_number = n) %>%
+	ggplot(aes(x = length_mm, y = egg_number)) + geom_point() + geom_smooth(method = "lm")
+
+all_fecund %>%
+	rename(egg_number = n) %>%
+	gather(key = fecundity_stage, value = fecundity, egg_number, initial_baby_count) %>% 
+	group_by(fecundity_stage) %>% 
+	do(tidy(lm(fecundity ~ length_mm, data = .), conf.int = TRUE)) %>% View
+
+	
