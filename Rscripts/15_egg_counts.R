@@ -35,7 +35,7 @@ all_clutches <- left_join(clutch_numbers, lengths) %>%
 
 
 all_clutches %>% 
-	ggplot(aes(x = Length, y = n)) + geom_point() + geom_smooth(method = "lm") +
+	ggplot(aes(x = Length, y = n)) + geom_point() + geom_smooth(method = "lm", color = "black") +
 	ylab("Number of eggs") + xlab("Length")
 
 all_clutches %>% 
