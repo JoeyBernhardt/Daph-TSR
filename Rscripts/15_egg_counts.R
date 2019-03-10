@@ -3,6 +3,7 @@
 library(tidyverse)
 library(here)
 library(cowplot)
+library(broom)
 
 
 daph_files <- list.files(path= "data-raw/daphnia-clutches-imagej/done", pattern="*.csv", recursive = TRUE, full.names = TRUE)
@@ -31,12 +32,31 @@ all_clutches <- left_join(clutch_numbers, lengths) %>%
 	rename(date = temperature, 
 				 temperature = replicate,
 				 replicate = clutch, 
-				 clutch = `-`) 
+				 clutch = `-`) %>% 
+	mutate(clutch = str_replace(clutch, "clutch", "")) %>% 
+	mutate(clutch = as.numeric(clutch))
 
 
 all_clutches %>% 
-	ggplot(aes(x = Length, y = n)) + geom_point() + geom_smooth(method = "lm", color = "black") +
+	# filter(n < 38) %>% 
+	filter(clutch < 12) %>% 
+	ggplot(aes(x = Length, y = n)) + geom_point()+
+	geom_smooth(method = "lm") +
 	ylab("Number of eggs") + xlab("Length")
 
-all_clutches %>% 
+all_clutches %>%
+	group_by(temperature) %>% 
+	do(tidy(lm(n ~ Length, data = .), conf.int = TRUE)) %>% View
+
+
+all_clutches %>%
 	lm(n ~ Length, data = .) %>% summary()
+
+library(lme4)
+
+mm <- all_clutches %>%
+	lmer(n ~ Length + (1|clutch), data = .,  REML=FALSE)
+
+summary(mm)
+anova(mm)
+coef(mm)
