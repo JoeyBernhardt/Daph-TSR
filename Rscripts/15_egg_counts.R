@@ -34,15 +34,17 @@ all_clutches <- left_join(clutch_numbers, lengths) %>%
 				 replicate = clutch, 
 				 clutch = `-`) %>% 
 	mutate(clutch = str_replace(clutch, "clutch", "")) %>% 
-	mutate(clutch = as.numeric(clutch))
+	mutate(clutch = as.numeric(clutch)) %>% 
+	mutate(length_mm = Length/1.593)
+
+### scale is 1.593 pixels = 1mm
 
 
 all_clutches %>% 
-	# filter(n < 38) %>% 
-	filter(clutch < 12) %>% 
-	ggplot(aes(x = Length, y = n)) + geom_point()+
-	geom_smooth(method = "lm") +
-	ylab("Number of eggs") + xlab("Length")
+	ggplot(aes(x = length_mm, y = n)) + geom_point()+
+	geom_smooth(method = "lm", color = "black") +
+	ylab("Number of eggs") + xlab("Body length (mm)")
+ggsave("figures/eggs_v_length.png", width = 4.5, height = 4)
 
 all_clutches %>%
 	group_by(temperature) %>% 
@@ -53,10 +55,12 @@ all_clutches %>%
 	lm(n ~ Length, data = .) %>% summary()
 
 library(lme4)
+library(MuMIn)
 
 mm <- all_clutches %>%
 	lmer(n ~ Length + (1|clutch), data = .,  REML=FALSE)
 
 summary(mm)
+r.squaredGLMM(mm)
 anova(mm)
 coef(mm)
