@@ -93,9 +93,16 @@ all_fecund %>%
 all_fecund %>%
 	rename(egg_number = n) %>% 
 	gather(key = fecundity_stage, value = fecundity, egg_number, final_baby_count) %>% 
+	mutate(fecundity_stage = ifelse(fecundity_stage == "egg_number", "Number of eggs per clutch", "Number of surviving neonates")) %>% 
 	ggplot(aes(x = length_mm, y = fecundity, color = fecundity_stage)) + geom_point() +
 	geom_smooth(method = "lm") +
-	facet_wrap( ~ fecundity_stage)
+	facet_wrap( ~ fecundity_stage) + xlab("Body length (mm)") + scale_color_discrete(name = "Fecundity metric")
+ggsave("figures/fecundities-acclimated.png", width = 12, height = 6)
+
+
+all_fecund %>%
+	rename(egg_number = n) %>%
+	ggplot(aes(x = length_mm, y = egg_number)) + geom_point() + geom_smooth(method = "lm")
 
 
 all_fecund %>%
@@ -108,4 +115,173 @@ all_fecund %>%
 	group_by(fecundity_stage) %>% 
 	do(tidy(lm(fecundity ~ length_mm, data = .), conf.int = TRUE)) %>% View
 
+
+### does body size increase with development time, like in Fig 1 in Sibly and Atkinson 1994?
+### does development time increase with fecundity? Fig 3 ?
+
+### it is necessary that h < (lmin/(linf - 1))/1 + k/juvenile mortality rate
+
+### let's get juvenile mortality rate
+library(plotrix)
+library(janitor)
+
+
+juvenile_mortality <- all_fecund %>% 
+	mutate(juvenile_mortality = (initial_baby_count - final_baby_count)/initial_baby_count)%>% 
+	filter(!is.na(juvenile_mortality)) %>% 
+	summarise_each(funs(mean, std.error), juvenile_mortality) 
+
+
+body_sizes <- read_csv("data-raw/acclimated-daphnia-body-size.csv") %>% 
+	clean_names()
+
+neonate_size <- body_sizes %>% 
+	filter(stage == "neonate") %>% 
+	summarise_each(funs(mean, std.error), size_um)
+
+vb_params <- read_csv("data-processed/acc_daph_vb_params_till_clutch4.csv") %>% 
+	clean_names() %>% 
+	separate(unique_id, into = c("temperature", "replicate"), sep = "_")
+
+vb_sum <- vb_params %>% 
+	group_by(term) %>% 
+	summarise_each(funs(mean, std.error), estimate)
+
+numerator <- (743.2104/(2713.5934614-1))
+
+denominator <- ((1+0.1052055)/0.0860794)
+
+numerator/denominator	
+
+
+### does juvenile mortality rate vary with temperature?
+
+juvenile_mortality_temps <- all_fecund %>% 
+	mutate(juvenile_mortality = (initial_baby_count - final_baby_count)/initial_baby_count)%>% 
+	filter(!is.na(juvenile_mortality)) %>% 
+	group_by(temperature) %>% 
+	summarise_each(funs(mean, std.error), juvenile_mortality) 
+
+
+juvenile_mortality_temps %>% 
+	ggplot(aes(x = temperature, y = mean)) + geom_point() +
+	geom_smooth(method = "lm") +
+	geom_errorbar(aes(ymin = mean - std.error, ymax = mean + std.error)) + ylab("Juvenile mortality rate") +
+	xlab("Temperature (°C)")
+
+
+### optimal body size 
+s_star <- A - (((f*A - H)*j)/(f*(k + j)))
+
+## size at maturity must be greater than H/f
+
+H <- 3000
+f <- 2
+H/f
+
+
+s <- body_sizes %>% 
+	filter(stage == "clutch1") %>% 
+	filter(!is.na(size_um))
+
+optimal_size_function <- function(f, A, H, j, k){
+	s_star <- A - (((f*A - H)*j)/(f*(k + j)))
+	return(s_star)
+}
 	
+
+A_20 <- vb_params %>% 
+	filter(term == "Linf", temperature == 20) %>% 
+	summarise(A = mean(estimate))
+
+k_20 <- vb_params %>% 
+	filter(term == "K", temperature == 20) %>% 
+	summarise(A = mean(estimate))
+
+j_20 <- juvenile_mortality_temps %>% 
+	filter(temperature == 20) %>% 
+	select(mean)
+
+j = juvenile_mortality$mean[[1]]
+
+s_20 <- optimal_size_function(H = H, f = f, A = A_20[[1]], k = k_20[[1]], j = j)
+
+
+#### 27
+A_27 <- vb_params %>% 
+	filter(term == "Linf", temperature == 27) %>% 
+	summarise(A = mean(estimate))
+
+k_27 <- vb_params %>% 
+	filter(term == "K", temperature == 27) %>% 
+	summarise(A = mean(estimate))
+
+j_27 <- juvenile_mortality_temps %>% 
+	filter(temperature == 27) %>% 
+	select(mean)
+
+s_27 <- optimal_size_function(H = H, f = f, A = A_27[[1]], k = k_27[[1]], j = j)
+
+#### 16
+A_16 <- vb_params %>% 
+	filter(term == "Linf", temperature == 16) %>% 
+	summarise(A = mean(estimate))
+
+k_16 <- vb_params %>% 
+	filter(term == "K", temperature == 16) %>% 
+	summarise(A = mean(estimate))
+
+j_16 <- juvenile_mortality_temps %>% 
+	filter(temperature == 16) %>% 
+	select(mean)
+
+s_16 <- optimal_size_function(H = H, f = f, A = A_16[[1]], k = k_16[[1]], j = j)
+
+#### 24
+A_24 <- vb_params %>% 
+	filter(term == "Linf", temperature == 24) %>% 
+	summarise(A = mean(estimate))
+
+k_24 <- vb_params %>% 
+	filter(term == "K", temperature == 24) %>% 
+	summarise(A = mean(estimate))
+
+j_24 <- juvenile_mortality_temps %>% 
+	filter(temperature == 24) %>% 
+	select(mean)
+
+s_24 <- optimal_size_function(H = H, f = f, A = A_24[[1]], k = k_24[[1]], j = j)
+
+
+#### 10
+A_10 <- vb_params %>% 
+	filter(term == "Linf", temperature == 10) %>% 
+	summarise(A = mean(estimate))
+
+k_10 <- vb_params %>% 
+	filter(term == "K", temperature == 10) %>% 
+	summarise(A = mean(estimate))
+
+j_10 <- juvenile_mortality_temps %>% 
+	filter(temperature == 10) %>% 
+	select(mean)
+
+s_10 <- optimal_size_function(H = H, f = f, A = A_10[[1]], k = k_10[[1]], j = j)
+
+
+all_s <- c(s_10, s_16, s_20, s_24, s_27)
+temps <- c(10, 16, 20, 24, 27)
+
+all_s_temp <- data.frame(s = all_s, temperature = temps)
+
+all_s_temp %>% 
+	ggplot(aes(x = temperature, y = s)) + geom_point() +
+	geom_point(aes(x = temperature, y = size_um), data= s, color ="red")
+
+
+vb_params %>% 
+	ggplot(aes(x = temperature, y = estimate)) + geom_point() +
+	facet_wrap( ~ term, scales = "free")
+
+juvenile_mortality_temps %>% 
+	ggplot(aes(x = temperature, y = mean)) + geom_point()
