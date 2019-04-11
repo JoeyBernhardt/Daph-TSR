@@ -135,6 +135,8 @@ data_10 <- left_join(age_10, length_10, by = c("temperature", "replicate", "clut
 # now fit vb --------------------------------------------------------------
 vbT <- vbFuns("typical")
 
+
+
 data_10_2 <- data_10 %>% 
 	rename(tl = length) %>% 
 	filter(!is.na(tl), !is.na(age)) %>% 

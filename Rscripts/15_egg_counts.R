@@ -116,6 +116,11 @@ all_fecund %>%
 	do(tidy(lm(fecundity ~ length_mm, data = .), conf.int = TRUE)) %>% View
 
 
+all_fecund2 <- all_fecund %>%
+	rename(egg_number = n)
+
+write_csv(all_fecund2, "data-processed/all_fecundities_acclimated.csv")
+
 ### does body size increase with development time, like in Fig 1 in Sibly and Atkinson 1994?
 ### does development time increase with fecundity? Fig 3 ?
 
@@ -202,7 +207,7 @@ j_20 <- juvenile_mortality_temps %>%
 	filter(temperature == 20) %>% 
 	select(mean)
 
-j = juvenile_mortality$mean[[1]]
+j = juvenile_mortality_temps$mean[[1]]
 
 s_20 <- optimal_size_function(H = H, f = f, A = A_20[[1]], k = k_20[[1]], j = j)
 
